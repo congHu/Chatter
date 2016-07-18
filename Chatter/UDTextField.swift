@@ -8,10 +8,34 @@
 
 import UIKit
 
+enum UDTextFieldType {
+    case Email
+    case Password
+    case Verify
+}
+
 class UDTextField: UITextField {
 
-    var underLine:UIView!
+    private var underLine:UIView!
     var tabIndex:Int = 0
+    var underLineColor:UIColor{
+        get{
+            return underLine.backgroundColor!
+        }
+        set(val){
+            underLine.backgroundColor = val
+        }
+    }
+    private var inputType:UDTextFieldType = .Email
+    var textFieldType:UDTextFieldType{
+        get{
+            return inputType
+        }
+        set(val){
+            inputType = val
+            setType()
+        }
+    }
     
     var boderWidth:CGFloat{
         get{
@@ -26,15 +50,44 @@ class UDTextField: UITextField {
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.borderStyle = UITextBorderStyle.None
+        self.clearButtonMode = .WhileEditing
         underLine = UIView(frame: CGRectMake(0, 0, self.frame.width, 2))
         underLine.center.y = self.frame.height - 1
         underLine.backgroundColor = UIColor.blackColor()
         self.addSubview(underLine)
+        setType()
+    }
+    
+    private func setType(){
+        switch inputType {
+        case .Email:
+            placeholder = "user@example.com"
+            keyboardType = .EmailAddress
+            returnKeyType = .Next
+            autocorrectionType = .No
+            autocapitalizationType = .None
+            tabIndex = 0
+            break
+        case .Password:
+            placeholder = "密码"
+            secureTextEntry = true
+            keyboardType = .ASCIICapable
+            returnKeyType = .Next
+            tabIndex = 1
+            break
+        case .Verify:
+            placeholder = "验证码"
+            returnKeyType = .Done
+            keyboardType = .ASCIICapable
+            autocorrectionType = .No
+            autocapitalizationType = .None
+            tabIndex = 2
+            break
+        }
     }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        fatalError("init(coder:) has not been implemented")
     }
     /*
     // Only override drawRect: if you perform custom drawing.

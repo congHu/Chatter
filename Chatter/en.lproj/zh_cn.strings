@@ -1,0 +1,18 @@
+/* 
+  zh_cn.strings
+  Chatter
+
+  Created by David on 16/7/14.
+  Copyright © 2016年 David. All rights reserved.
+*/
+"emial_placeholder" = "user@example.com"
+"password_placeholder" = "密码"
+"verify_placeholder" = "验证码"
+"login" = "登陆"
+"register" = "注册"
+"forget" = "忘记"
+"not_correct" = "不正确"
+"dosent_exist" = "不存在"
+"is_already_exist" = "已存在"
+"psw_require_6more" = "密码需要6位或以上"
+""
