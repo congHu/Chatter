@@ -17,14 +17,14 @@ class FirstViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         loginVC = UDLoginViewController()
-        loginVC.view.backgroundColor = UIColor.whiteColor()
-        print(NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true))
+        print(NSSearchPathForDirectoriesInDomains(.ApplicationDirectory, .UserDomainMask, true))
         if NSUserDefaults.standardUserDefaults().objectForKey("user") == nil{
             presentViewController(loginVC, animated: false, completion: nil)
         }else{
             let data = NSUserDefaults.standardUserDefaults().objectForKey("user") as! NSData
             let user = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
             uid = user?.objectForKey("uid") as? String
+            print("uid: " + uid!)
         }
         
         
