@@ -18,6 +18,9 @@
 		63182D231D2BC0F60056DF85 /* UDTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63182D221D2BC0F60056DF85 /* UDTextField.swift */; };
 		632C621F1D3CBEF70010C27C /* UDRegViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632C621E1D3CBEF70010C27C /* UDRegViewController.swift */; };
 		638769DE1D3686DE001257DC /* UDLoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638769DD1D3686DE001257DC /* UDLoginViewController.swift */; };
+		63A13A321D3F52E200DB7287 /* UDChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A13A311D3F52E200DB7287 /* UDChatViewController.swift */; };
+		63A13A341D3F550800DB7287 /* HexColorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A13A331D3F550800DB7287 /* HexColorExtension.swift */; };
+		63A13A361D3F57CB00DB7287 /* UDChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A13A351D3F57CB00DB7287 /* UDChatBubble.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +58,9 @@
 		63182D221D2BC0F60056DF85 /* UDTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDTextField.swift; sourceTree = "<group>"; };
 		632C621E1D3CBEF70010C27C /* UDRegViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDRegViewController.swift; sourceTree = "<group>"; };
 		638769DD1D3686DE001257DC /* UDLoginViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDLoginViewController.swift; sourceTree = "<group>"; };
+		63A13A311D3F52E200DB7287 /* UDChatViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatViewController.swift; sourceTree = "<group>"; };
+		63A13A331D3F550800DB7287 /* HexColorExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HexColorExtension.swift; sourceTree = "<group>"; };
+		63A13A351D3F57CB00DB7287 /* UDChatBubble.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatBubble.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +118,9 @@
 				638769DD1D3686DE001257DC /* UDLoginViewController.swift */,
 				632C621E1D3CBEF70010C27C /* UDRegViewController.swift */,
 				6315CF0E1D27FF0000F25879 /* Main.storyboard */,
+				63A13A311D3F52E200DB7287 /* UDChatViewController.swift */,
+				63A13A351D3F57CB00DB7287 /* UDChatBubble.swift */,
+				63A13A331D3F550800DB7287 /* HexColorExtension.swift */,
 				6315CF111D27FF0000F25879 /* Assets.xcassets */,
 				6315CF131D27FF0000F25879 /* LaunchScreen.storyboard */,
 				6315CF161D27FF0000F25879 /* Info.plist */,
@@ -270,8 +279,11 @@
 				632C621F1D3CBEF70010C27C /* UDRegViewController.swift in Sources */,
 				6315CF0D1D27FF0000F25879 /* SecondViewController.swift in Sources */,
 				6315CF091D27FF0000F25879 /* AppDelegate.swift in Sources */,
+				63A13A341D3F550800DB7287 /* HexColorExtension.swift in Sources */,
 				6315CF0B1D27FF0000F25879 /* FirstViewController.swift in Sources */,
 				638769DE1D3686DE001257DC /* UDLoginViewController.swift in Sources */,
+				63A13A321D3F52E200DB7287 /* UDChatViewController.swift in Sources */,
+				63A13A361D3F57CB00DB7287 /* UDChatBubble.swift in Sources */,
 				63182D231D2BC0F60056DF85 /* UDTextField.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
