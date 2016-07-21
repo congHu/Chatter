@@ -21,15 +21,23 @@ class UDChatBubble: UIView {
     private var textContainer:UILabel!
     private var content:String! = "System test text"
     private var maxWidth:CGFloat!
+    private var uid:String?
+    var avatar:UIButton?
+    var style:UDChatBubbleStyle{
+        get {
+            return bubbleStyle
+        }
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
     }
     
-    convenience init(frame: CGRect, style: UDChatBubbleStyle, text: String) {
+    convenience init(frame: CGRect, style: UDChatBubbleStyle, text: String, uid: String?) {
         self.init(frame: frame)
         bubbleStyle = style
         content = text
+        self.uid = uid
         load()
     }
     
@@ -47,14 +55,16 @@ class UDChatBubble: UIView {
             bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.15, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 53, g: 152, b: 219, a: 225)
             bubbleBG.layer.cornerRadius = 8
-            setNeedsDisplay()
+            avatar = UIButton(frame: CGRect(x: 8, y: 0, width: UIScreen.mainScreen().bounds.width*0.1, height: UIScreen.mainScreen().bounds.width*0.1))
+            
             break
         case .Right:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
-            bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.85 - size.width - 8, y: 0, width: size.width + 16, height: size.height + 16))
+            bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.85 - size.width - 16, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 39, g: 174, b: 97, a: 255)
             bubbleBG.layer.cornerRadius = 8
-            setNeedsDisplay()
+            avatar = UIButton(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.9 - 8, y: 0, width: UIScreen.mainScreen().bounds.width*0.1, height: UIScreen.mainScreen().bounds.width*0.1))
+            
             break
         case .System:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
@@ -71,6 +81,32 @@ class UDChatBubble: UIView {
         textContainer.textColor = UIColor.whiteColor()
         self.addSubview(bubbleBG)
         bubbleBG.addSubview(textContainer)
+        avatar?.backgroundColor = UIColor.grayColor()
+        avatar?.adjustsImageWhenHighlighted = true
+        if bubbleStyle != .System{
+            
+            // TODO: 构造的时候读取本地数据。迟点要把头像更新放到个人页面，更新的时候要把图片存在本地
+            let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
+            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/avatar/\(uid!).jpg"){
+                avatar?.setImage(UIImage(contentsOfFile: "\(caches)/avatar/\(uid!).jpg"), forState: .Normal)
+            }else{
+                let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(uid!)")!)
+                NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    if err == nil{
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
+                            if json == nil{
+                                dispatch_async(dispatch_get_main_queue(), {
+                                    self.avatar?.setImage(UIImage(data: data), forState: .Normal)
+                                    data.writeToFile("\(caches)/avatar/\(self.uid!).jpg", atomically: true)
+                                })
+                            }
+                        }
+                    }
+                })
+            }
+            
+        }
         
     }
     
@@ -78,6 +114,7 @@ class UDChatBubble: UIView {
         super.init(coder: aDecoder)
     }
 
+    
     
     // Only override drawRect: if you perform custom drawing.
     // An empty implementation adversely affects performance during animation.
@@ -105,6 +142,11 @@ class UDChatBubble: UIView {
             break
         default:
             break
+        }
+        
+        if avatar != nil{
+            self.addSubview(avatar!)
+            bringSubviewToFront(avatar!)
         }
 
         

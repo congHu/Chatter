@@ -254,7 +254,7 @@ class UDRegViewController: UIViewController {
             // MARK: 注册完成
             let returnData = try? NSJSONSerialization.JSONObjectWithData(res, options: .AllowFragments) as! NSDictionary
             let user = NSMutableDictionary()
-            user.setObject(NSNull(), forKey: "localpsw")
+            user.setObject(returnData?.objectForKey("activecode") as! String, forKey: "activecode")
             user.setObject("0", forKey: "isActive")
             user.setObject(returnData?.objectForKey("uid") as! String, forKey: "uid")
             let jsonData = try? NSJSONSerialization.dataWithJSONObject(user, options: .PrettyPrinted)

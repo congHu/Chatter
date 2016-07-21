@@ -70,7 +70,11 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: false)
     }
     func gotoSetting(){
-        print("push UDChatSettingVC")
+        let userVC = UDUserViewController()
+        // TODO: 传入uid
+        userVC.uid = "4"
+        hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(userVC, animated: true)
     }
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return 2
@@ -85,13 +89,18 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "msg")
         if indexPath.section == 0{
+            var bubble:UDChatBubble!
             if indexPath.row%2 == 0{
-                let bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: testMsg[indexPath.row])
-                cell.addSubview(bubble)
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: testMsg[indexPath.row], uid: "4")
+                
             }else{
-                let bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: testMsg[indexPath.row])
-                cell.addSubview(bubble)
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: testMsg[indexPath.row], uid: "4")
             }
+            if bubble.style != .System {
+                bubble.avatar!.addTarget(self, action: #selector(UDChatViewController.gotoUser), forControlEvents: .TouchUpInside)
+            }
+            
+            cell.addSubview(bubble)
         }
         return cell
     }
@@ -174,6 +183,14 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         
         buttomOriginHeight = inputTextView.contentSize.height
         
+    }
+    
+    func gotoUser(){
+        let userVC = UDUserViewController()
+        // TODO: 传入uid
+        userVC.uid = "4"
+        hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(userVC, animated: true)
     }
     
     override func didReceiveMemoryWarning() {

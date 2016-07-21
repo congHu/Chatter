@@ -12,6 +12,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     
     var loginVC:UDLoginViewController!
     var uid:String?
+    var active:String?
     var tableView:UITableView!
     
     @IBOutlet var navBar: UINavigationItem!
@@ -26,6 +27,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             let data = NSUserDefaults.standardUserDefaults().objectForKey("user") as! NSData
             let user = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
             uid = user?.objectForKey("uid") as? String
+            active = user?.objectForKey("activecode") as? String
             print("uid: " + uid!)
         }
         navBar.title = "连接中..."
@@ -34,8 +36,15 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         view.addSubview(tableView)
         tableView.delegate = self
         tableView.dataSource = self
+        
+        let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
+        
+        _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/avatar", withIntermediateDirectories: true, attributes: nil)
     }
-    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
+    }
     func timerElapse(){
         navBar.title = "消息"
     }
@@ -52,6 +61,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         hidesBottomBarWhenPushed = true
         let chatVC = UDChatViewController()
+        // TODO: 这是假数据
         chatVC.chatroomName = "\(indexPath.row)"
         chatVC.chatroomID = "324"
         chatVC.view.backgroundColor = UIColor.whiteColor()
