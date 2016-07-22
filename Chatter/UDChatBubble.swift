@@ -29,6 +29,8 @@ class UDChatBubble: UIView {
         }
     }
 
+    var statusView:UDSendStatusView?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
     }
@@ -65,6 +67,10 @@ class UDChatBubble: UIView {
             bubbleBG.layer.cornerRadius = 8
             avatar = UIButton(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.9 - 8, y: 0, width: UIScreen.mainScreen().bounds.width*0.1, height: UIScreen.mainScreen().bounds.width*0.1))
             
+            statusView = UDSendStatusView(frame: CGRect(x: bubbleBG.frame.origin.x - 28, y: bubbleBG.frame.height - 28, width: 20, height: 20))
+            self.addSubview(statusView!)
+            
+            
             break
         case .System:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
@@ -85,12 +91,13 @@ class UDChatBubble: UIView {
         avatar?.adjustsImageWhenHighlighted = true
         if bubbleStyle != .System{
             
-            // TODO: 构造的时候读取本地数据。迟点要把头像更新放到个人页面，更新的时候要把图片存在本地
+            // MARK: 获取本地头像，没有的话才请求数据库
             let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
-            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/avatar/\(uid!).jpg"){
-                avatar?.setImage(UIImage(contentsOfFile: "\(caches)/avatar/\(uid!).jpg"), forState: .Normal)
+            
+            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/avatar/user\(uid!).jpg"){
+                avatar?.setImage(UIImage(contentsOfFile: "\(caches)/avatar/user\(uid!).jpg"), forState: .Normal)
             }else{
-                let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(uid!)")!)
+                let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(uid!)&type=user")!)
                 NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
                     if err == nil{
                         if let data = returnData{
@@ -98,7 +105,7 @@ class UDChatBubble: UIView {
                             if json == nil{
                                 dispatch_async(dispatch_get_main_queue(), {
                                     self.avatar?.setImage(UIImage(data: data), forState: .Normal)
-                                    data.writeToFile("\(caches)/avatar/\(self.uid!).jpg", atomically: true)
+                                    data.writeToFile("\(caches)/avatar/user\(self.uid!).jpg", atomically: true)
                                 })
                             }
                         }

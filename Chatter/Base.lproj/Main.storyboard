@@ -110,7 +110,7 @@
         <scene sceneID="K7h-kd-qr2">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="1FR-Pn-ubx" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="消息" image="icon_chat_right" badgeValue="1" id="acW-dT-cKf"/>
+                    <tabBarItem key="tabBarItem" title="消息" image="icon_chat_right" id="acW-dT-cKf"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="QMI-DR-AT1">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>

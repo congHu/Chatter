@@ -267,33 +267,36 @@ class UDLoginViewController: UIViewController {
     
     private func handleResult(res: NSData){
         let jsonObj = try? NSJSONSerialization.JSONObjectWithData(res, options: .AllowFragments) as! NSDictionary
-        if jsonObj?.objectForKey("error") != nil{
-            let errCode = jsonObj?.objectForKey("error") as! Int
-            switch errCode{
-            case 101:
-                setErrorMsg("用户不存在，请注册")
-                emailTextField.becomeFirstResponder()
-                break
-            case 102:
-                setErrorMsg("密码不正确，忘记密码？")
-                passwordTextField.becomeFirstResponder()
-                break
-            case 103:
-                setErrorMsg("验证码不正确")
-                verifyTextField.becomeFirstResponder()
-                break
-            default:
-                setErrorMsg("发生错误: \(errCode)")
-                break
+        if jsonObj != nil{
+            if jsonObj?.objectForKey("error") != nil{
+                let errCode = jsonObj?.objectForKey("error") as! Int
+                switch errCode{
+                case 101:
+                    setErrorMsg("用户不存在，请注册")
+                    emailTextField.becomeFirstResponder()
+                    break
+                case 102:
+                    setErrorMsg("密码不正确，忘记密码？")
+                    passwordTextField.becomeFirstResponder()
+                    break
+                case 103:
+                    setErrorMsg("验证码不正确")
+                    verifyTextField.becomeFirstResponder()
+                    break
+                default:
+                    setErrorMsg("发生错误: \(errCode)")
+                    break
+                }
+                requireVerify = true
+                postingStatus(false)
+            }else{
+                // MARK: 登陆成功
+                NSUserDefaults.standardUserDefaults().setObject(res, forKey: "user")
+                print(jsonObj)
+                dismissViewControllerAnimated(true, completion: nil)
             }
-            requireVerify = true
-            postingStatus(false)
-        }else{
-            // MARK: 登陆成功
-            NSUserDefaults.standardUserDefaults().setObject(res, forKey: "user")
-            print(jsonObj)
-            dismissViewControllerAnimated(true, completion: nil)
         }
+        
     }
 
     private func setErrorMsg(message: String){

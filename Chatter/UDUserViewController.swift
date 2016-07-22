@@ -21,7 +21,8 @@ class UDUserViewController: UIViewController {
         avatar.center.x = view.center.x
         avatar.backgroundColor = UIColor.grayColor()
         view.addSubview(avatar)
-        let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(uid!)")!)
+        
+        let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(uid!)&type=user")!)
         NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
             if err == nil{
                 if let data = returnData{
@@ -29,12 +30,13 @@ class UDUserViewController: UIViewController {
                     if json == nil{
                         dispatch_async(dispatch_get_main_queue(), {
                             self.avatar?.image = UIImage(data: data)
-                            data.writeToFile("\(caches)/avatar/\(self.uid!).jpg", atomically: true)
+                            data.writeToFile("\(caches)/avatar/user\(self.uid!).jpg", atomically: true)
                         })
                     }
                 }
             }
         })
+        
         
         
     }

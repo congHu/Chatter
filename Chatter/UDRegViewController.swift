@@ -234,33 +234,36 @@ class UDRegViewController: UIViewController {
     
     private func handleResult(res: NSData){
         let jsonObj = try? NSJSONSerialization.JSONObjectWithData(res, options: .AllowFragments) as! NSDictionary
-        if jsonObj?.objectForKey("error") != nil{
-            let errCode = jsonObj?.objectForKey("error") as! Int
-            switch errCode{
-            case 103:
-                setErrorMsg("验证码不正确")
-                verifyTextField.becomeFirstResponder()
-                break
-            case 111:
-                setErrorMsg("用户名已注册，请登录")
-                break
-            default:
-                setErrorMsg("发生错误: \(errCode)")
-                break
+        if jsonObj != nil{
+            if jsonObj?.objectForKey("error") != nil{
+                let errCode = jsonObj?.objectForKey("error") as! Int
+                switch errCode{
+                case 103:
+                    setErrorMsg("验证码不正确")
+                    verifyTextField.becomeFirstResponder()
+                    break
+                case 111:
+                    setErrorMsg("用户名已注册，请登录")
+                    break
+                default:
+                    setErrorMsg("发生错误: \(errCode)")
+                    break
+                }
+                postingStatus(false)
+                refreshVerifyImg()
+            }else{
+                // MARK: 注册完成
+                let returnData = try? NSJSONSerialization.JSONObjectWithData(res, options: .AllowFragments) as! NSDictionary
+                let user = NSMutableDictionary()
+                user.setObject(returnData?.objectForKey("activecode") as! String, forKey: "activecode")
+                user.setObject("0", forKey: "isActive")
+                user.setObject(returnData?.objectForKey("uid") as! String, forKey: "uid")
+                let jsonData = try? NSJSONSerialization.dataWithJSONObject(user, options: .PrettyPrinted)
+                NSUserDefaults.standardUserDefaults().setObject(jsonData!, forKey: "user")
+                dismissViewControllerAnimated(false, completion: nil)
             }
-            postingStatus(false)
-            refreshVerifyImg()
-        }else{
-            // MARK: 注册完成
-            let returnData = try? NSJSONSerialization.JSONObjectWithData(res, options: .AllowFragments) as! NSDictionary
-            let user = NSMutableDictionary()
-            user.setObject(returnData?.objectForKey("activecode") as! String, forKey: "activecode")
-            user.setObject("0", forKey: "isActive")
-            user.setObject(returnData?.objectForKey("uid") as! String, forKey: "uid")
-            let jsonData = try? NSJSONSerialization.dataWithJSONObject(user, options: .PrettyPrinted)
-            NSUserDefaults.standardUserDefaults().setObject(jsonData!, forKey: "user")
-            dismissViewControllerAnimated(false, completion: nil)
         }
+        
     }
 
     private func setErrorMsg(message: String){

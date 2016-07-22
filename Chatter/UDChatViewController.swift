@@ -12,6 +12,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
 
     var chatroomID:String?
     var chatroomName:String?
+    var myUID:String?
     
     var draft:String?
     
@@ -26,9 +27,13 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     
     private var tableOffsetYOrigin:CGFloat!
     private var isKeyboardShowed = false
+    private var isScrollToButtom = true
+    //private var keyboardAnimating = false
     
-    // TODO: 准备真实数据
-    let testMsg = ["你好","你好！😄","我们来测试一下吗？","好啊！","那就开始了喔","准备好了","Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.","Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.","仂猀呧觖陏鸆楥鈺劦圪瓬杈怭穻杈趓乇抯駃鉏。夬悢忥趼枷灟溠筤优伈峇坌昅囷沇溰屮泑毾萺。敓一枵谹寍鉠乜幙噮仈，淂屮洒堄萏鉐乇摎冘夯。仈蚢孢崚殂麡雵搘匟旯宨扷坲炂阨塨乜岨慴滏。堷苃阤膷楱醑癿一傝蚸烒抩夯柀丌，殛堹兀泔籹筰狉阞屮侁禓笁夃帙。爿旂怴裉祋靃葳鄎扙朹奅旲枌怙匉翜丌肸蜞塎。蚺一峛唰雈頍屮碲謔卬，氪丌洐梒跕僋亍綼圠庂。猝一峔庴嵀嗐亍箑鬳冇，淠乇柘逡菡煝亍斠勼夗。揲妵邘彋萿輹艸一蛣厜俴抶刉籹乜，嗝琖兀炘侺艂刱氻屮垀勩壴仂抴。","仂猀呧觖陏鸆楥鈺劦圪瓬杈怭穻杈趓乇抯駃鉏。夬悢忥趼枷灟溠筤优伈峇坌昅囷沇溰屮泑毾萺。敓一枵谹寍鉠乜幙噮仈，淂屮洒堄萏鉐乇摎冘夯。仈蚢孢崚殂麡雵搘匟旯宨扷坲炂阨塨乜岨慴滏。堷苃阤膷楱醑癿一傝蚸烒抩夯柀丌，殛堹兀泔籹筰狉阞屮侁禓笁夃帙。爿旂怴裉祋靃葳鄎扙朹奅旲枌怙匉翜丌肸蜞塎。蚺一峛唰雈頍屮碲謔卬，氪丌洐梒跕僋亍綼圠庂。猝一峔庴嵀嗐亍箑鬳冇，淠乇柘逡菡煝亍斠勼夗。揲妵邘彋萿輹艸一蛣厜俴抶刉籹乜，嗝琖兀炘侺艂刱氻屮垀勩壴仂抴。","仂猀呧觖陏鸆楥鈺劦圪瓬杈怭穻杈趓乇抯駃鉏。夬悢忥趼枷灟溠筤优伈峇坌昅囷沇溰屮泑毾萺。敓一枵谹寍鉠乜幙噮仈，淂屮洒堄萏鉐乇摎冘夯。仈蚢孢崚殂麡雵搘匟旯宨扷坲炂阨塨乜岨慴滏。Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.","仂猀呧觖陏鸆楥鈺劦圪瓬杈怭穻杈趓乇抯駃鉏。夬悢忥趼枷灟溠筤优伈峇坌昅囷沇溰屮泑毾萺。敓一枵谹寍鉠乜幙噮仈，淂屮洒堄萏鉐乇摎冘夯。仈蚢孢崚殂麡雵搘匟旯宨扷坲炂阨塨乜岨慴滏。Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."]
+    let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
+    var msgList:NSMutableArray!
+    
+    let testMsg = ["你好","你好！😄","我们来测试一下吗？","好啊！","那就开始了喔","准备好了","Lorem ipsum dolor sit amet","consectetur adipisicing elit","仂猀呧觖陏鸆楥鈺劦圪瓬杈怭穻杈趓乇抯駃鉏。","爿旂怴裉祋靃葳鄎扙朹奅旲枌怙匉翜丌肸蜞塎。"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,18 +62,51 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         buttomBar.addSubview(inputTextView)
         buttomOriginY = buttomBar.frame.origin.y
         inputTextView.delegate = self
+        inputTextView.returnKeyType = .Send
+        inputTextView.enablesReturnKeyAutomatically = true
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillShow(_:)), name: UIKeyboardWillShowNotification, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillUnShow(_:)), name: UIKeyboardWillHideNotification, object: nil)
         
-    }
-    override func viewWillAppear(animated: Bool) {
-        super.viewWillAppear(animated)
+        let msgPath = "\(caches)/\(chatroomID!).plist"
+        if NSFileManager.defaultManager().fileExistsAtPath(msgPath){
+            msgList = NSMutableArray(contentsOfFile: msgPath)
+        }else{
+            msgList = NSMutableArray()
+            msgList.writeToFile(msgPath, atomically: true)
+        }
         
+        NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: #selector(UDChatViewController.timerElapse), userInfo: nil, repeats: true)
+        
+    }
+    func timerElapse(){
+        // MARK: 定时检查新消息
+        let msgPath = "\(caches)/\(chatroomID!).plist"
+        if NSFileManager.defaultManager().fileExistsAtPath(msgPath){
+            msgList = NSMutableArray(contentsOfFile: msgPath)
+        }else{
+            msgList = NSMutableArray()
+            msgList.writeToFile(msgPath, atomically: true)
+        }
+        tableView.reloadData()
+        if isScrollToButtom && tableView.contentSize.height > tableView.frame.height{
+            tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
+        }
+        
+    }
+
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        if tableView.contentOffset.y + tableView.frame.height >= tableView.contentSize.height - 1{
+            isScrollToButtom = true
+        }else{
+            isScrollToButtom = false
+        }
     }
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
-        tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: false)
+        if tableView.contentSize.height > tableView.frame.height{
+            tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: false)
+        }
     }
     func gotoSetting(){
         let userVC = UDUserViewController()
@@ -82,7 +120,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     }
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0{
-            return testMsg.count
+            return msgList.count
         }
         return 1
         
@@ -91,12 +129,16 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "msg")
         if indexPath.section == 0{
             var bubble:UDChatBubble!
-            if indexPath.row%2 == 0{
-                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: testMsg[indexPath.row], uid: "4")
-                
+            let curItem = msgList.objectAtIndex(indexPath.row) as! NSDictionary
+            // TODO: 还没考虑群聊的情况, 和其他类型消息的情况
+            let fromID = curItem.objectForKey("fromid") as! String
+            let msgText = curItem.objectForKey("body") as! String
+            if fromID != myUID{
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
             }else{
-                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: testMsg[indexPath.row], uid: "4")
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID)
             }
+            //头像点击事件
             if bubble.style != .System {
                 bubble.avatar!.addTarget(self, action: #selector(UDChatViewController.gotoUser), forControlEvents: .TouchUpInside)
             }
@@ -108,7 +150,9 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         switch indexPath.section {
         case 0:
-            let size = NSString(string: testMsg[indexPath.row]).boundingRectWithSize(CGSize(width: UIScreen.mainScreen().bounds.width*0.6, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: UIFont.systemFontOfSize(14)], context: nil)
+            let curItem = msgList.objectAtIndex(indexPath.row) as! NSDictionary
+            let msgText = curItem.objectForKey("body") as! String
+            let size = NSString(string: msgText).boundingRectWithSize(CGSize(width: UIScreen.mainScreen().bounds.width*0.6, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: UIFont.systemFontOfSize(14)], context: nil)
             return size.height + 32
         case 1:
             return 48 + buttomChangeHeight
@@ -124,14 +168,17 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         var time:NSTimeInterval = 0
         let timeValue = info[UIKeyboardAnimationDurationUserInfoKey] as! NSValue
         timeValue.getValue(&time)
+        //keyboardAnimating = true
         
-        
-        UIView.animateWithDuration(time) { () -> Void in
+        UIView.animateWithDuration(time, animations: {
             self.buttomBar.center.y -= height
             self.tableView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height - height)
+            }) { (finished) in
+                
         }
-        
-        tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentOffset.y + height), animated: true)
+        if self.isScrollToButtom{
+            self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
+        }
         buttomStartedY = buttomBar.frame.origin.y + buttomChangeHeight
         isKeyboardShowed = true
     }
@@ -141,18 +188,23 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         var time:NSTimeInterval = 0
         let timeValue = info[UIKeyboardAnimationDurationUserInfoKey] as! NSValue
         timeValue.getValue(&time)
-        UIView.animateWithDuration(time) { () -> Void in
+        //keyboardAnimating = true
+        UIView.animateWithDuration(time, animations: {
             self.buttomBar.frame.origin.y = self.buttomOriginY - self.buttomChangeHeight
             self.tableView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height)
+            }) { (finished) in
+                //self.keyboardAnimating = false
         }
         isKeyboardShowed = false
     }
     
     func textViewDidChange(textView: UITextView) {
+        // MARK: 没有虚拟键盘的情况
         if !isKeyboardShowed{
             buttomStartedY = view.frame.height - 40
             tableOffsetYOrigin = tableView.contentOffset.y
         }
+        // MARK: 根据文字调整高度
         if buttomOriginHeight != inputTextView.contentSize.height{
             if inputTextView.contentSize.height <= 24 {
                 
@@ -179,10 +231,9 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             tableView.reloadData()
             tableView.setContentOffset(CGPoint(x: 0, y: tableOffsetYOrigin + buttomChangeHeight), animated: true)
         }
-        
-        
-        
         buttomOriginHeight = inputTextView.contentSize.height
+        
+        
         
     }
     
@@ -193,12 +244,53 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(userVC, animated: true)
     }
-    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
     
+    func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
+        if text == "\n" {
+            // MARK: 发送消息
+            
+            let msgToSend = NSMutableDictionary()
+            msgToSend.setValue("user", forKey: "send_from")
+            msgToSend.setValue("\(myUID!)", forKey: "fromid")
+            
+            // TODO: 需要支持更多的type
+            msgToSend.setValue("string", forKey: "type")
+            
+            msgToSend.setValue("\(inputTextView.text)", forKey: "body")
+            let date = NSDate()
+            let formate = NSDateFormatter()
+            formate.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let timeStr = formate.stringFromDate(date)
+            msgToSend.setValue("\(timeStr)", forKey: "time")
+            msgToSend.setValue("\(chatroomName!)", forKey: "chatname")
+            
+//            {
+//                "send_from":"user",
+//                "fromid":"8",
+//                "type":"string",
+//                "body":"\u6d4b\u8bd5\u6d4b\u8bd5",
+//                "time":"2016-07-21 23:22:32",
+//                "chatname":"\u7cfb\u7edf\u6d88\u606f"
+//            }
+            
+            msgList.addObject(msgToSend)
+            tableView.reloadData()
+            if tableView.contentSize.height > tableView.frame.height{
+                tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
+            }
+            
+            let msgPath = "\(caches)/\(chatroomID!).plist"
+            msgList.writeToFile(msgPath, atomically: true)
+            inputTextView.text = ""
+            
+            return false
+        }
+        return true
+    }
 
     /*
     // MARK: - Navigation
