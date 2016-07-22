@@ -48,7 +48,12 @@ class UDChatBubble: UIView {
         maxWidth = UIScreen.mainScreen().bounds.width*0.6
         textContainer = UILabel()
         textContainer.numberOfLines = 0
-        textContainer.font = UIFont.systemFontOfSize(14)
+        if bubbleStyle != .System{
+            textContainer.font = UIFont.systemFontOfSize(14)
+        }else{
+            textContainer.font = UIFont.systemFontOfSize(10)
+        }
+        
         let size = NSString(string: content).boundingRectWithSize(CGSize(width: maxWidth, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: textContainer.font], context: nil)
         
         switch bubbleStyle {
@@ -67,14 +72,15 @@ class UDChatBubble: UIView {
             bubbleBG.layer.cornerRadius = 8
             avatar = UIButton(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.9 - 8, y: 0, width: UIScreen.mainScreen().bounds.width*0.1, height: UIScreen.mainScreen().bounds.width*0.1))
             
-            statusView = UDSendStatusView(frame: CGRect(x: bubbleBG.frame.origin.x - 28, y: bubbleBG.frame.height - 28, width: 20, height: 20))
-            self.addSubview(statusView!)
+//            statusView = UDSendStatusView(frame: CGRect(x: bubbleBG.frame.origin.x - 28, y: bubbleBG.frame.height - 28, width: 20, height: 20))
+//            self.addSubview(statusView!)
             
             
             break
         case .System:
-            textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
-            bubbleBG = UIView(frame: CGRect(x: 0, y: 0, width: size.width + 16, height: size.height + 8))
+            textContainer.frame = CGRect(x: 4, y: 0, width: size.width, height: size.height)
+            
+            bubbleBG = UIView(frame: CGRect(x: 0, y: 0, width: size.width + 8, height: size.height + 4))
             bubbleBG.center.x = UIScreen.mainScreen().bounds.width/2
             bubbleBG.backgroundColor = UIColor(hex: "cccccc")
             bubbleBG.layer.cornerRadius = 4

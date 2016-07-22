@@ -13,7 +13,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     var chatroomID:String?
     var chatroomName:String?
     var myUID:String?
-    
+    var myAcode:String?
     var draft:String?
     
     private var buttomBar: UIVisualEffectView!
@@ -131,13 +131,20 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             var bubble:UDChatBubble!
             let curItem = msgList.objectAtIndex(indexPath.row) as! NSDictionary
             // TODO: 还没考虑群聊的情况, 和其他类型消息的情况
-            let fromID = curItem.objectForKey("fromid") as! String
+            let sendFromType = curItem.objectForKey("send_from") as! String
             let msgText = curItem.objectForKey("body") as! String
-            if fromID != myUID{
-                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
-            }else{
-                bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID)
+            if sendFromType == "user"{
+                let fromID = curItem.objectForKey("fromid") as! String
+                
+                if fromID != myUID{
+                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
+                }else{
+                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID)
+                }
+            }else if sendFromType == "system"{
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil)
             }
+            
             //头像点击事件
             if bubble.style != .System {
                 bubble.avatar!.addTarget(self, action: #selector(UDChatViewController.gotoUser), forControlEvents: .TouchUpInside)
@@ -251,22 +258,93 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     
     func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
         if text == "\n" {
-            // MARK: 发送消息
+            // TODO: 发送消息
             
-            let msgToSend = NSMutableDictionary()
-            msgToSend.setValue("user", forKey: "send_from")
-            msgToSend.setValue("\(myUID!)", forKey: "fromid")
             
-            // TODO: 需要支持更多的type
-            msgToSend.setValue("string", forKey: "type")
-            
-            msgToSend.setValue("\(inputTextView.text)", forKey: "body")
+            //比较时间，判断是否添加时间标记
             let date = NSDate()
             let formate = NSDateFormatter()
             formate.dateFormat = "yyyy-MM-dd HH:mm:ss"
             let timeStr = formate.stringFromDate(date)
-            msgToSend.setValue("\(timeStr)", forKey: "time")
-            msgToSend.setValue("\(chatroomName!)", forKey: "chatname")
+            
+            var requireMarker = true
+            
+            if msgList.count != 0{
+                let lastTime = (msgList.lastObject as! NSDictionary).objectForKey("time") as! String
+                requireMarker = UDChatDate.isTimeToAddTimeMarker(timeStr, lastTime)
+            }
+            if requireMarker{
+                let timeMarker = NSMutableDictionary()
+                timeMarker.setValue("system", forKey: "send_from")
+                timeMarker.setValue("0", forKey: "fromid")
+                timeMarker.setValue("string", forKey: "type")
+                timeMarker.setValue(UDChatDate.longTime(timeStr)!, forKey: "body")
+                timeMarker.setValue(timeStr, forKey: "time")
+                timeMarker.setValue("\(chatroomName!)", forKey: "chatname")
+                msgList.addObject(timeMarker)
+            }
+            
+            let msgToSend = NSMutableDictionary()
+            
+            
+            if chatroomID!.hasPrefix("user"){
+                let thisChatID = NSString(string: chatroomID!).substringFromIndex(5) 
+                //消息写入本地
+                msgToSend.setValue("user", forKey: "send_from")
+                msgToSend.setValue("\(myUID!)", forKey: "fromid")
+                
+                // TODO: 需要支持更多的type
+                msgToSend.setValue("string", forKey: "type")
+                
+                msgToSend.setValue("\(inputTextView.text)", forKey: "body")
+                
+                msgToSend.setValue("\(timeStr)", forKey: "time")
+                msgToSend.setValue("\(chatroomName!)", forKey: "chatname")
+                msgToSend.setValue("0", forKey: "sendStatus")
+                
+                //更新首页消息列表
+                let homePageMsg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
+                var reverseAry = homePageMsg?.reverseObjectEnumerator().allObjects
+                for i in 0..<reverseAry!.count{
+                    let dic = reverseAry![i] as! NSDictionary
+                    if dic.objectForKey("send_from") as! String == "user" && dic.objectForKey("fromid") as! String == "\(thisChatID)"{
+                        reverseAry?.removeAtIndex(i)
+                        break
+                    }
+                }
+                reverseAry?.append(msgToSend)
+                homePageMsg?.removeAllObjects()
+                reverseAry = (reverseAry! as NSArray).reverseObjectEnumerator().allObjects
+                for item in reverseAry!{
+                    homePageMsg?.addObject(item)
+                }
+                homePageMsg?.writeToFile("\(caches)/msg.plist", atomically: true)
+                
+                //MARK: POST消息
+                let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/sendMsg.php")!)
+                resq.HTTPMethod = "POST"
+                resq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisChatID)&msgtype=string&body=\(inputTextView.text)").dataUsingEncoding(NSUTF8StringEncoding)
+//                $uid = $_POST["uid"];
+//                $acode = $_POST["acode"];
+//                $toid = $_POST["toid"];
+//                $msgtype = $_POST["msgtype"];
+//                $body = $_POST["body"];
+                NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    if err == nil{
+                        if let data = returnData{
+                            let jsonObj = try! NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if jsonObj.objectForKey("error") == nil{
+                                if (jsonObj.objectForKey("error") as! String) == "200"{
+                                    // TODO: 发送成功时spinner消失
+                                    //或者不显示spinner，发送失败时显示错误信息
+                                }
+                            }
+                        }
+                    }
+                })
+            }
+            
+            
             
 //            {
 //                "send_from":"user",
@@ -279,6 +357,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             
             msgList.addObject(msgToSend)
             tableView.reloadData()
+            
             if tableView.contentSize.height > tableView.frame.height{
                 tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
             }

@@ -211,4 +211,36 @@ class UDChatDate {
         }
     }
     
+    static func isTimeToAddTimeMarker(time1: String, _ time2: String) -> Bool{
+        let formatter = NSDateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let date1 = formatter.dateFromString(time1)
+        if date1 == nil{
+            return true
+        }
+        let date2 = formatter.dateFromString(time2)
+        if date2 == nil{
+            return true
+        }
+        let das = NSCalendar.currentCalendar()
+        //new 一个 NSCalendar
+        let flags: NSCalendarUnit = [.NSYearCalendarUnit, .NSMonthCalendarUnit, .NSDayCalendarUnit, .NSHourCalendarUnit, .NSMinuteCalendarUnit]
+        //设置格式
+        let com1 = das.components(flags, fromDate: date1!)
+        let com2 = das.components(flags, fromDate: date2!)
+        
+        if com1.year == com2.year{
+            if com1.month == com2.month{
+                if com1.day == com2.day{
+                    if com1.hour == com2.hour{
+                        if abs(com1.minute - com2.minute) < 1{
+                            return false
+                        }
+                    }
+                }
+            }
+        }
+        return true
+    }
+    
 }

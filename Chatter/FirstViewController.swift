@@ -61,13 +61,20 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
         }else{
             self.navBar.title = "消息"
-            self.tabBarController?.tabBar.items?.first!.badgeValue = ""
+            self.tabBarController?.tabBar.items?.first!.badgeValue = nil
         }
         
     }
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
-        
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
+            msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
+            
+        }else{
+            msg = NSMutableArray()
+            msg?.writeToFile("\(caches)/msg.plist", atomically: true)
+        }
+        tableView.reloadData()
         
     }
     
@@ -104,11 +111,13 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                         break
                                     }
                                 }
-                                msgItem.setObject(unread, forKey: "unread")
                                 
+                                msgItem.setObject(unread, forKey: "unread")
                                 self.numOfUnread += unread
+                                
                                 reMsg?.append(msgItem)
                                 
+                                let msgTime = msgItem.objectForKey("time") as! String
                                 
                                 // 分发消息到各个列表
                                 let currentPath = "\(self.caches)/\(sendFromType)\(sendFromID).plist"
@@ -117,6 +126,22 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                     dialogList = NSMutableArray(contentsOfFile: currentPath)
                                 }else{
                                     dialogList = NSMutableArray()
+                                }
+                                var requireMarker = true
+                                
+                                if dialogList?.count != 0{
+                                    let lastTime = (dialogList?.lastObject as! NSDictionary).objectForKey("time") as! String
+                                    requireMarker = UDChatDate.isTimeToAddTimeMarker(msgTime, lastTime)
+                                }
+                                if requireMarker{
+                                    let timeMarker = NSMutableDictionary()
+                                    timeMarker.setValue("system", forKey: "send_from")
+                                    timeMarker.setValue("0", forKey: "fromid")
+                                    timeMarker.setValue("string", forKey: "type")
+                                    timeMarker.setValue(UDChatDate.longTime(msgTime)!, forKey: "body")
+                                    timeMarker.setValue(msgTime, forKey: "time")
+                                    timeMarker.setValue("\(sendFromType)\(sendFromID)", forKey: "chatname")
+                                    dialogList?.addObject(timeMarker)
                                 }
                                 dialogList?.addObject(msgItem)
                                 dialogList?.writeToFile(currentPath, atomically: true)
@@ -221,13 +246,12 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         let chatTitle = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: cell.frame.width - 100 - avatar.frame.width, height: 20))
         chatTitle.text = msgItem?.objectForKey("chatname") as? String
-        //chatTitle.backgroundColor = UIColor.greenColor()
         cell.addSubview(chatTitle)
         
         let textPV = UILabel(frame: CGRect(x: chatTitle.frame.origin.x, y: 36, width: cell.frame.width - 60 - avatar.frame.width, height: 20))
-        //textPV.backgroundColor = UIColor.greenColor()
         textPV.textColor = UIColor.grayColor()
         textPV.text = msgItem?.objectForKey("body") as? String
+        textPV.font = UIFont.systemFontOfSize(14)
         cell.addSubview(textPV)
         
         
@@ -256,6 +280,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         hidesBottomBarWhenPushed = true
         let chatVC = UDChatViewController()
         chatVC.myUID = uid
+        chatVC.myAcode = active
         chatVC.chatroomName = msgItem?.objectForKey("chatname") as? String
         chatVC.chatroomID = "\(msgItem?.objectForKey("send_from") as! String)\(msgItem?.objectForKey("fromid") as! String)"
         chatVC.view.backgroundColor = UIColor.whiteColor()
