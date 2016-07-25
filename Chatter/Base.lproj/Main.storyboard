@@ -46,7 +46,7 @@
             </objects>
             <point key="canvasLocation" x="1562" y="1043"/>
         </scene>
-        <!--Second View Controller-->
+        <!--通讯录-->
         <scene sceneID="wg7-f3-ORb">
             <objects>
                 <viewController id="8rJ-Kc-sve" customClass="SecondViewController" customModule="Chatter" customModuleProvider="target" sceneMemberID="viewController">
@@ -80,7 +80,7 @@
                             <constraint firstAttribute="centerY" secondItem="zEq-FU-wV5" secondAttribute="centerY" id="qzY-Ky-pLD"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="VVq-P1-dWB"/>
+                    <navigationItem key="navigationItem" title="通讯录" id="VVq-P1-dWB"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="4Nw-L8-lE0" sceneMemberID="firstResponder"/>
             </objects>
@@ -144,11 +144,11 @@
             </objects>
             <point key="canvasLocation" x="750" y="1043"/>
         </scene>
-        <!--Second-->
+        <!--通讯录-->
         <scene sceneID="cCr-7U-log">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Ykg-Kw-8VJ" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Second" image="second" id="cPa-gy-q4n"/>
+                    <tabBarItem key="tabBarItem" title="通讯录" image="second" id="cPa-gy-q4n"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="ErC-FE-Tdz">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>

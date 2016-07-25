@@ -63,7 +63,7 @@ class UDChatBubble: UIView {
             bubbleBG.backgroundColor = UIColor(r: 53, g: 152, b: 219, a: 225)
             bubbleBG.layer.cornerRadius = 8
             avatar = UIButton(frame: CGRect(x: 8, y: 0, width: UIScreen.mainScreen().bounds.width*0.1, height: UIScreen.mainScreen().bounds.width*0.1))
-            
+            avatar?.tag = Int(uid!)!
             break
         case .Right:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
@@ -71,7 +71,7 @@ class UDChatBubble: UIView {
             bubbleBG.backgroundColor = UIColor(r: 39, g: 174, b: 97, a: 255)
             bubbleBG.layer.cornerRadius = 8
             avatar = UIButton(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.9 - 8, y: 0, width: UIScreen.mainScreen().bounds.width*0.1, height: UIScreen.mainScreen().bounds.width*0.1))
-            
+            avatar?.tag = Int(uid!)!
 //            statusView = UDSendStatusView(frame: CGRect(x: bubbleBG.frame.origin.x - 28, y: bubbleBG.frame.height - 28, width: 20, height: 20))
 //            self.addSubview(statusView!)
             

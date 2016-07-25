@@ -10,7 +10,7 @@ import UIKit
 
 class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
-    var loginVC:UDLoginViewController!
+//    var loginVC:UDLoginViewController!
     var uid:String?
     var active:String?
     var tableView:UITableView!
@@ -18,14 +18,16 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var numOfUnread = 0
     
-    
     @IBOutlet var navBar: UINavigationItem!
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        loginVC = UDLoginViewController()
+        
         print(NSSearchPathForDirectoriesInDomains(.ApplicationDirectory, .UserDomainMask, true))
+        
+        //是否登录。获取uid和acode
         if NSUserDefaults.standardUserDefaults().objectForKey("user") == nil{
+            let loginVC = UDLoginViewController()
             presentViewController(loginVC, animated: false, completion: nil)
         }else{
             let data = NSUserDefaults.standardUserDefaults().objectForKey("user") as! NSData
@@ -34,15 +36,17 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             active = user?.objectForKey("activecode") as? String
             print("uid: \(uid!) | acode: \(active!)")
         }
+        
         navBar.title = "连接中..."
-        NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: #selector(FirstViewController.timerElapse), userInfo: nil, repeats: true)
+        
         tableView = UITableView(frame: view.frame)
         view.addSubview(tableView)
         tableView.delegate = self
         tableView.dataSource = self
         
+        NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: #selector(FirstViewController.timerElapse), userInfo: nil, repeats: true)
         
-        
+        //读取主页消息
         _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/avatar", withIntermediateDirectories: true, attributes: nil)
         if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
             msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
@@ -52,6 +56,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             msg?.writeToFile("\(caches)/msg.plist", atomically: true)
         }
         
+        //获取未读消息数
         for item in msg!{
             let msgItem = item as! NSDictionary
             numOfUnread += msgItem.objectForKey("unread") as! Int
@@ -82,102 +87,105 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     // MARK: 定时检查新消息
     func timerElapse(){
         // 请求
-        let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/fetchMsg.php")!)
-        resq.HTTPMethod = "POST"
-        resq.HTTPBody = NSString(string: "uid=\(uid!)&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
-        NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
-            if err == nil{
-                if let data = returnData{
-                    let jsonObj = try! NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSMutableArray
-                    if jsonObj != nil{
-                        if jsonObj?.count != 0{ // 是否有消息
-                            var reMsg = self.msg?.reverseObjectEnumerator().allObjects
-                            self.numOfUnread = 0
-                            for item in jsonObj!{
-                                let msgItem = NSMutableDictionary(dictionary: item as! NSDictionary)
-                                
-                                let sendFromType = msgItem.objectForKey("send_from") as! String
-                                let sendFromID = msgItem.objectForKey("fromid") as! String
-                                
-                                
-                                // 找出列表里面的同类项，放到列表前面
-                                var unread = 1
-                                for ins in 0..<reMsg!.count{
-                                    let dic = reMsg![ins] as! NSDictionary
-                                    if dic.objectForKey("send_from") as! String == sendFromType && dic.objectForKey("fromid") as! String == sendFromID{
-                                        let lastUnread = dic.objectForKey("unread") as! Int
-                                        unread += lastUnread
-                                        reMsg?.removeAtIndex(ins)
-                                        break
+        if uid != nil && active != nil{
+            let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/fetchMsg.php")!)
+            resq.HTTPMethod = "POST"
+            resq.HTTPBody = NSString(string: "uid=\(uid!)&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
+            NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let jsonObj = try! NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSMutableArray
+                        if jsonObj != nil{
+                            if jsonObj?.count != 0{ // 是否有消息
+                                var reMsg = self.msg?.reverseObjectEnumerator().allObjects
+                                self.numOfUnread = 0
+                                for item in jsonObj!{
+                                    let msgItem = NSMutableDictionary(dictionary: item as! NSDictionary)
+                                    
+                                    let sendFromType = msgItem.objectForKey("send_from") as! String
+                                    let sendFromID = msgItem.objectForKey("fromid") as! String
+                                    
+                                    
+                                    // 找出列表里面的同类项，放到列表前面
+                                    var unread = 1
+                                    for ins in 0..<reMsg!.count{
+                                        let dic = reMsg![ins] as! NSDictionary
+                                        if dic.objectForKey("send_from") as! String == sendFromType && dic.objectForKey("fromid") as! String == sendFromID{
+                                            let lastUnread = dic.objectForKey("unread") as! Int
+                                            unread += lastUnread
+                                            reMsg?.removeAtIndex(ins)
+                                            break
+                                        }
                                     }
+                                    
+                                    msgItem.setObject(unread, forKey: "unread")
+                                    self.numOfUnread += unread
+                                    
+                                    reMsg?.append(msgItem)
+                                    
+                                    let msgTime = msgItem.objectForKey("time") as! String
+                                    
+                                    // 分发消息到各个列表
+                                    let currentPath = "\(self.caches)/\(sendFromType)\(sendFromID).plist"
+                                    let dialogList:NSMutableArray?
+                                    if NSFileManager.defaultManager().fileExistsAtPath(currentPath){
+                                        dialogList = NSMutableArray(contentsOfFile: currentPath)
+                                    }else{
+                                        dialogList = NSMutableArray()
+                                    }
+                                    var requireMarker = true
+                                    
+                                    if dialogList?.count != 0{
+                                        let lastTime = (dialogList?.lastObject as! NSDictionary).objectForKey("time") as! String
+                                        requireMarker = UDChatDate.isTimeToAddTimeMarker(msgTime, lastTime)
+                                    }
+                                    if requireMarker{
+                                        let timeMarker = NSMutableDictionary()
+                                        timeMarker.setValue("system", forKey: "send_from")
+                                        timeMarker.setValue("0", forKey: "fromid")
+                                        timeMarker.setValue("string", forKey: "type")
+                                        timeMarker.setValue(UDChatDate.longTime(msgTime)!, forKey: "body")
+                                        timeMarker.setValue(msgTime, forKey: "time")
+                                        timeMarker.setValue("\(sendFromType)\(sendFromID)", forKey: "chatname")
+                                        dialogList?.addObject(timeMarker)
+                                    }
+                                    dialogList?.addObject(msgItem)
+                                    dialogList?.writeToFile(currentPath, atomically: true)
                                 }
                                 
-                                msgItem.setObject(unread, forKey: "unread")
-                                self.numOfUnread += unread
-                                
-                                reMsg?.append(msgItem)
-                                
-                                let msgTime = msgItem.objectForKey("time") as! String
-                                
-                                // 分发消息到各个列表
-                                let currentPath = "\(self.caches)/\(sendFromType)\(sendFromID).plist"
-                                let dialogList:NSMutableArray?
-                                if NSFileManager.defaultManager().fileExistsAtPath(currentPath){
-                                    dialogList = NSMutableArray(contentsOfFile: currentPath)
-                                }else{
-                                    dialogList = NSMutableArray()
+                                // 刷新内存，reloadData
+                                self.msg?.removeAllObjects()
+                                reMsg = (reMsg! as NSArray).reverseObjectEnumerator().allObjects
+                                for item in reMsg!{
+                                    self.msg?.addObject(item)
                                 }
-                                var requireMarker = true
+                                self.msg?.writeToFile("\(self.caches)/msg.plist", atomically: true)
                                 
-                                if dialogList?.count != 0{
-                                    let lastTime = (dialogList?.lastObject as! NSDictionary).objectForKey("time") as! String
-                                    requireMarker = UDChatDate.isTimeToAddTimeMarker(msgTime, lastTime)
-                                }
-                                if requireMarker{
-                                    let timeMarker = NSMutableDictionary()
-                                    timeMarker.setValue("system", forKey: "send_from")
-                                    timeMarker.setValue("0", forKey: "fromid")
-                                    timeMarker.setValue("string", forKey: "type")
-                                    timeMarker.setValue(UDChatDate.longTime(msgTime)!, forKey: "body")
-                                    timeMarker.setValue(msgTime, forKey: "time")
-                                    timeMarker.setValue("\(sendFromType)\(sendFromID)", forKey: "chatname")
-                                    dialogList?.addObject(timeMarker)
-                                }
-                                dialogList?.addObject(msgItem)
-                                dialogList?.writeToFile(currentPath, atomically: true)
+                                
                             }
                             
-                            // 刷新内存，reloadData
-                            self.msg?.removeAllObjects()
-                            reMsg = (reMsg! as NSArray).reverseObjectEnumerator().allObjects
-                            for item in reMsg!{
-                                self.msg?.addObject(item)
-                            }
-                            self.msg?.writeToFile("\(self.caches)/msg.plist", atomically: true)
-                            
-                            
+                            dispatch_async(dispatch_get_main_queue(), {
+                                self.navBar.title = "消息(\(self.numOfUnread))"
+                                self.tableView.reloadData()
+                                self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
+                            })
                         }
-                        
                         dispatch_async(dispatch_get_main_queue(), {
-                            self.navBar.title = "消息(\(self.numOfUnread))"
-                            self.tableView.reloadData()
-                            self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
+                            if self.numOfUnread != 0{
+                                self.navBar.title = "消息(\(self.numOfUnread))"
+                                self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
+                            }else{
+                                self.navBar.title = "消息"
+                                self.tabBarController?.tabBar.items?.first!.badgeValue = nil
+                            }
+                            
                         })
-                    }
-                    dispatch_async(dispatch_get_main_queue(), {
-                        if self.numOfUnread != 0{
-                            self.navBar.title = "消息(\(self.numOfUnread))"
-                            self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
-                        }else{
-                            self.navBar.title = "消息"
-                            self.tabBarController?.tabBar.items?.first!.badgeValue = nil
-                        }
                         
-                    })
-                    
+                    }
                 }
             }
         }
+        
         
         
         
@@ -282,7 +290,15 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         chatVC.myUID = uid
         chatVC.myAcode = active
         chatVC.chatroomName = msgItem?.objectForKey("chatname") as? String
-        chatVC.chatroomID = "\(msgItem?.objectForKey("send_from") as! String)\(msgItem?.objectForKey("fromid") as! String)"
+        // TODO: 需要考虑群聊的情况
+        let chatType = msgItem?.objectForKey("send_from") as! String
+        let chatID = msgItem?.objectForKey("fromid") as! String
+        if chatType == "user"{
+            chatVC.chatroomID = "\(chatType)\(chatID)"
+        }else if chatType.hasPrefix("group"){
+            chatVC.chatroomID = "\(chatType)"
+        }
+        
         chatVC.view.backgroundColor = UIColor.whiteColor()
         navigationController?.pushViewController(chatVC, animated: true)
         tableView.deselectRowAtIndexPath(indexPath, animated: true)

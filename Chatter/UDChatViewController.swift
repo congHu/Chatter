@@ -65,6 +65,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         inputTextView.returnKeyType = .Send
         inputTextView.enablesReturnKeyAutomatically = true
         
+        // TODO: 切换输入法bug
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillShow(_:)), name: UIKeyboardWillShowNotification, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillUnShow(_:)), name: UIKeyboardWillHideNotification, object: nil)
         
@@ -109,11 +110,11 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         }
     }
     func gotoSetting(){
-        let userVC = UDUserViewController()
-        // TODO: 传入uid
-        userVC.uid = "4"
-        hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(userVC, animated: true)
+//        let userVC = UDUserViewController()
+//        // TODO: 传入uid
+//        userVC.uid = "4"
+//        hidesBottomBarWhenPushed = true
+//        navigationController?.pushViewController(userVC, animated: true)
     }
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return 2
@@ -130,12 +131,12 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         if indexPath.section == 0{
             var bubble:UDChatBubble!
             let curItem = msgList.objectAtIndex(indexPath.row) as! NSDictionary
-            // TODO: 还没考虑群聊的情况, 和其他类型消息的情况
+            
             let sendFromType = curItem.objectForKey("send_from") as! String
             let msgText = curItem.objectForKey("body") as! String
             if sendFromType == "user"{
                 let fromID = curItem.objectForKey("fromid") as! String
-                
+                // TODO: 还没考虑群聊的情况, 和其他类型消息的情况
                 if fromID != myUID{
                     bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
                 }else{
@@ -144,6 +145,14 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             }else if sendFromType == "system"{
                 bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil)
             }
+//            else if sendFromType.hasPrefix("group"){
+//                
+//                if fromID != myUID{
+//                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
+//                }else{
+//                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID)
+//                }
+//            }
             
             //头像点击事件
             if bubble.style != .System {
@@ -244,10 +253,10 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         
     }
     
-    func gotoUser(){
+    func gotoUser(sender:UIButton){
         let userVC = UDUserViewController()
         // TODO: 传入uid
-        userVC.uid = "4"
+        userVC.thisUid = String(sender.tag)
         hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(userVC, animated: true)
     }
@@ -258,7 +267,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     
     func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
         if text == "\n" {
-            // TODO: 发送消息
+            // MARK: 发送消息
             
             
             //比较时间，判断是否添加时间标记
@@ -286,21 +295,33 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             
             let msgToSend = NSMutableDictionary()
             
-            
+            let thisMsgBody = inputTextView.text
             if chatroomID!.hasPrefix("user"){
-                let thisChatID = NSString(string: chatroomID!).substringFromIndex(5) 
-                //消息写入本地
+                let thisChatID = NSString(string: chatroomID!).substringFromIndex(4)
+                //生成消息
                 msgToSend.setValue("user", forKey: "send_from")
                 msgToSend.setValue("\(myUID!)", forKey: "fromid")
                 
                 // TODO: 需要支持更多的type
                 msgToSend.setValue("string", forKey: "type")
                 
-                msgToSend.setValue("\(inputTextView.text)", forKey: "body")
+                msgToSend.setValue("\(thisMsgBody)", forKey: "body")
                 
                 msgToSend.setValue("\(timeStr)", forKey: "time")
                 msgToSend.setValue("\(chatroomName!)", forKey: "chatname")
                 msgToSend.setValue("0", forKey: "sendStatus")
+                
+                //写入文件
+                msgList.addObject(msgToSend)
+                tableView.reloadData()
+                
+                if tableView.contentSize.height > tableView.frame.height{
+                    tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
+                }
+                
+                let msgPath = "\(caches)/\(chatroomID!).plist"
+                msgList.writeToFile(msgPath, atomically: true)
+                
                 
                 //更新首页消息列表
                 let homePageMsg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
@@ -312,7 +333,10 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                         break
                     }
                 }
-                reverseAry?.append(msgToSend)
+                let msgShowInHomePage = NSMutableDictionary(dictionary: msgToSend)
+                msgShowInHomePage.setValue(0, forKey: "unread")
+                msgShowInHomePage.setValue("\(thisChatID)", forKey: "fromid")
+                reverseAry?.append(msgShowInHomePage)
                 homePageMsg?.removeAllObjects()
                 reverseAry = (reverseAry! as NSArray).reverseObjectEnumerator().allObjects
                 for item in reverseAry!{
@@ -323,23 +347,40 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                 //MARK: POST消息
                 let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/sendMsg.php")!)
                 resq.HTTPMethod = "POST"
-                resq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisChatID)&msgtype=string&body=\(inputTextView.text)").dataUsingEncoding(NSUTF8StringEncoding)
+                resq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisChatID)&msgtype=string&body=\(thisMsgBody)").dataUsingEncoding(NSUTF8StringEncoding)
 //                $uid = $_POST["uid"];
 //                $acode = $_POST["acode"];
 //                $toid = $_POST["toid"];
 //                $msgtype = $_POST["msgtype"];
 //                $body = $_POST["body"];
                 NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    var sendSuccess = false
                     if err == nil{
                         if let data = returnData{
+                            print(NSString(data: data, encoding: NSUTF8StringEncoding))
                             let jsonObj = try! NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
-                            if jsonObj.objectForKey("error") == nil{
-                                if (jsonObj.objectForKey("error") as! String) == "200"{
-                                    // TODO: 发送成功时spinner消失
-                                    //或者不显示spinner，发送失败时显示错误信息
-                                }
+                            if jsonObj.objectForKey("success") != nil{
+                                sendSuccess = true
                             }
                         }
+                    }
+                    if !sendSuccess{
+                        let timeMarker = NSMutableDictionary()
+                        timeMarker.setValue("system", forKey: "send_from")
+                        timeMarker.setValue("0", forKey: "fromid")
+                        timeMarker.setValue("string", forKey: "type")
+                        timeMarker.setValue("很抱歉，您的消息\"\(thisMsgBody)\"发送失败", forKey: "body")
+                        timeMarker.setValue(timeStr, forKey: "time")
+                        timeMarker.setValue("\(self.chatroomName!)", forKey: "chatname")
+                        self.msgList.addObject(timeMarker)
+                        self.msgList.writeToFile(msgPath, atomically: true)
+                        
+                        dispatch_async(dispatch_get_main_queue(), {
+                            self.tableView.reloadData()
+                            if self.tableView.contentSize.height > self.tableView.frame.height{
+                                self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
+                            }
+                        })
                     }
                 })
             }
@@ -355,17 +396,9 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
 //                "chatname":"\u7cfb\u7edf\u6d88\u606f"
 //            }
             
-            msgList.addObject(msgToSend)
-            tableView.reloadData()
             
-            if tableView.contentSize.height > tableView.frame.height{
-                tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
-            }
-            
-            let msgPath = "\(caches)/\(chatroomID!).plist"
-            msgList.writeToFile(msgPath, atomically: true)
             inputTextView.text = ""
-            
+            textViewDidChange(inputTextView)
             return false
         }
         return true
