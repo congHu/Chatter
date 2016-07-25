@@ -17,7 +17,7 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
     var active:String?
     var indexKeys:[String] = []
     var numOfRows:[Int] = []
-    var friendComments:NSDictionary?
+//    var friendComments:NSDictionary?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -91,7 +91,7 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
         let friendFilePath = "\(caches)/friends.plist"
-        // TODO: 获取好友列表
+        // MARK: 获取好友列表
         let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendList.php")!)
         resq.HTTPMethod = "POST"
         resq.HTTPBody = NSString(string: "uid=\(uid!)&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
@@ -154,6 +154,7 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         }
         
         //获取备注列表
+        /*
         if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
             friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
         }else{
@@ -173,6 +174,9 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 }
             }
         }
+ */
+        
+        
         tableView.reloadData()
         
     }
@@ -241,9 +245,9 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 
                 let namelabel = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: cell.frame.width - avatar.frame.width - 32, height: avatar.frame.height))
                 namelabel.text = friendItem?.objectForKey("uname") as? String
-                if friendComments?.objectForKey("\(fid!)") != nil{
-                    namelabel.text = friendComments?.objectForKey("\(fid!)") as? String
-                }
+//                if friendComments?.objectForKey("\(fid!)") != nil{
+//                    namelabel.text = friendComments?.objectForKey("\(fid!)") as? String
+//                }
                 
                 cell.addSubview(namelabel)
             }

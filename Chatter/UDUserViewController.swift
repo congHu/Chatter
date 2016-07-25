@@ -7,9 +7,16 @@
 //
 
 import UIKit
+enum UDUserRelation {
+    case Myself
+    case Friend
+    case Stranger
+    case BlackList
+}
+class UDUserViewController: UIViewController, UIActionSheetDelegate {
 
-class UDUserViewController: UIViewController {
-
+    var scrollView:UIScrollView!
+    
     var myUID:String?
     var acode:String?
     var thisUid:String?
@@ -21,61 +28,229 @@ class UDUserViewController: UIViewController {
     var subLabel:UILabel?
     
     var infoTableView:UITableView!
+    let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     
-    
+    var friendComments:NSDictionary?
+    var friendRelation:UDUserRelation = .Stranger
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.lightGrayColor()
+        
+        scrollView = UIScrollView(frame: view.frame)
+        view.addSubview(scrollView)
+        scrollView.backgroundColor = UIColor(hex: "dddddd")
+        scrollView.alwaysBounceVertical = true
         
         
+        // TODO: 获取封面图
+        bgImgView = UIButton(frame: CGRect(x: 0, y: -128, width: scrollView.frame.width, height: scrollView.frame.width))
+        scrollView.addSubview(bgImgView)
+        bgImgView.backgroundColor = UIColor.lightGrayColor()
         
-        let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
-        avatar = UIButton(frame: CGRect(x: 0, y: 100, width: 80, height: 80))
-        avatar.center.x = view.center.x
+        
+        avatar = UIButton(frame: CGRect(x: 16, y: bgImgView.frame.origin.y + bgImgView.frame.height - 40, width: 80, height: 80))
         avatar.backgroundColor = UIColor.grayColor()
         avatar.layer.cornerRadius = 10
-        view.addSubview(avatar)
+        avatar.layer.borderColor = UIColor.whiteColor().CGColor
+        avatar.layer.borderWidth = 2
+        avatar.layer.masksToBounds = true
+        scrollView.addSubview(avatar)
+        let avatarImgPath = "\(caches)/avatar/user\(thisUid!).jpg"
+        if NSFileManager.defaultManager().fileExistsAtPath(avatarImgPath){
+            avatar.setImage(UIImage(contentsOfFile: avatarImgPath), forState: .Normal)
+        }
+        
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
+            friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
+        }else{
+            let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
+            friendComReq.HTTPMethod = "POST"
+            friendComReq.HTTPBody = NSString(string: "uid=\(myUID!)&&acode=\(acode!)").dataUsingEncoding(NSUTF8StringEncoding)
+            NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                        self.friendComments = NSDictionary(dictionary: jsonObj!)
+                        self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
+                        dispatch_async(dispatch_get_main_queue(), {
+                            if self.friendComments?.objectForKey("\(self.thisUid!)") != nil{
+                                self.unameLabel.text = self.friendComments?.objectForKey("\(self.thisUid!)") as? String
+                            }
+                        })
+                    }
+                }
+            }
+        }
+        
+        unameLabel = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: avatar.frame.origin.y + 20, width: scrollView.frame.width - avatar.frame.width - 16 - 8 - 16, height: 20))
+        scrollView.addSubview(unameLabel)
+        unameLabel.textColor = UIColor.whiteColor()
+        unameLabel.font = UIFont.systemFontOfSize(16)
+        unameLabel.layer.shadowColor = UIColor.blackColor().CGColor
+        unameLabel.layer.shadowOffset = CGSize(width: 2, height: 2)
+        unameLabel.text = ""
+        if friendComments?.objectForKey("\(thisUid!)") != nil{
+            unameLabel.text = friendComments?.objectForKey("\(thisUid!)") as? String
+        }
         
         
+        subLabel = UILabel(frame: CGRect(x: unameLabel.frame.origin.x + 5, y: bgImgView.frame.origin.y + bgImgView.frame.height, width: unameLabel.frame.width, height: 20))
+        subLabel?.textColor = UIColor.grayColor()
+        subLabel?.font = UIFont.systemFontOfSize(12)
+        scrollView.addSubview(subLabel!)
+        subLabel?.text = ""
         
-        let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(thisUid!)&type=user")!)
-        NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+        let avatarResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(thisUid!)&type=user")!)
+        NSURLConnection.sendAsynchronousRequest(avatarResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
             if err == nil{
                 if let data = returnData{
                     let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
                     if json == nil{
                         dispatch_async(dispatch_get_main_queue(), {
-                            self.avatar?.setImage(UIImage(data: data), forState: .Normal)
-                            data.writeToFile("\(caches)/avatar/user\(self.thisUid!).jpg", atomically: true)
+                            self.avatar.setImage(UIImage(data: data), forState: .Normal)
+                            data.writeToFile(avatarImgPath, atomically: true)
                         })
+                        
+                        
+                    }
+                    
+                }
+            }
+        })
+        
+        let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(thisUid!)")!)
+        NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+            if err == nil{
+                if let data = returnData{
+                    let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                    if json != nil{
+                        print(json)
+                        if json!.objectForKey("error") == nil{
+                            dispatch_async(dispatch_get_main_queue(), {
+                                self.navigationItem.title = json?.objectForKey("uname") as? String
+                                if self.unameLabel.text == ""{
+                                    self.unameLabel.text = json?.objectForKey("uname") as? String
+                                }
+                                var subTitle = ""
+                                if (json?.objectForKey("area") as? String) != nil{
+                                    subTitle += json?.objectForKey("area") as! String
+                                    subTitle += " "
+                                }
+                                if (json?.objectForKey("gender") as? String) != nil{
+                                    let gender = json?.objectForKey("gender") as! String
+                                    if gender == "0"{
+                                        subTitle += "男"
+                                    }else if gender == "1"{
+                                        subTitle += "女"
+                                    }
+                                    subTitle += " "
+                                }
+                                if json?.objectForKey("age") != nil{
+                                    if (json?.objectForKey("age") as? Int) != nil{
+                                        subTitle += "\(json?.objectForKey("age") as! Int)"
+                                        subTitle += "岁"
+                                    }
+                                }
+                                
+                                self.subLabel?.text = subTitle
+                                
+                            })
+                        }
                     }
                 }
             }
         })
         
     }
+    
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
         rightToolBar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 70, height: 45))
         rightToolBar.layer.borderWidth = 0.0
         rightToolBar.layer.masksToBounds = true
         
-        // MARK: 获取用户的关系
+        // TODO: 获取用户的关系, 还差黑名单
+        var toolBarItems:[UIBarButtonItem] = []
+        if myUID == thisUid{
+            friendRelation = .Myself
+            
+        }else{
+            let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(thisUid!)")!)
+            NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
+                        if json == nil{
+                            dispatch_async(dispatch_get_main_queue(), {
+                                if NSString(data: data, encoding: NSUTF8StringEncoding) == "1"{
+                                    self.friendRelation = .Friend
+                                }
+                                switch self.friendRelation {
+                                case .Myself:
+                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.gotoEdit)))
+                                    break
+                                case .Stranger:
+                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
+                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FixedSpace, target: self, action: nil))
+                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.moreMenu)))
+                                    break
+                                case .Friend:
+                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.gotoChat)))
+                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FixedSpace, target: self, action: nil))
+                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.moreMenu)))
+                                    break
+                                default:
+                                    break
+                                }
+                                
+                                self.rightToolBar.setItems(toolBarItems, animated: true)
+                                self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: self.rightToolBar)
+                            })
+                        }
+                    }
+                }
+            })
+            
+        }
         
-        
-        rightToolBar.setItems([UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "edit"), UIBarButtonItem(barButtonSystemItem: .FixedSpace, target: self, action: nil), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "sel2")], animated: true)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: rightToolBar)
     }
     
     func gotoEdit(){
-        
+        print("edit")
     }
     func gotoChat(){
-        
+        print("chat")
     }
     func gotoAddFriend(){
+        print("add friend")
+    }
+    func moreMenu(){
+        switch friendRelation {
+        case .Myself:
+            break
+        case .Friend:
+            UIActionSheet(title: nil, delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "删除好友").showInView(view)
+            break
+        case .Stranger:
+            UIActionSheet(title: nil, delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "添加至黑名单").showInView(view)
+            break
+        case .BlackList:
+            UIActionSheet(title: nil, delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "移除黑名单").showInView(view)
+            break
+        }
         
+    }
+    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+        switch friendRelation {
+        case .Myself:
+            break
+        case .Friend:
+            break
+        case .Stranger:
+            break
+        case .BlackList:
+            break
+        }
     }
 
     override func didReceiveMemoryWarning() {
