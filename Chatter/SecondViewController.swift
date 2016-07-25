@@ -17,6 +17,7 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
     var active:String?
     var indexKeys:[String] = []
     var numOfRows:[Int] = []
+    var friendComments:NSDictionary?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -80,7 +81,6 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
             let user = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
             uid = user?.objectForKey("uid") as? String
             active = user?.objectForKey("activecode") as? String
-            print("uid: \(uid!) | acode: \(active!)")
         }
         
         
@@ -152,6 +152,29 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 }
             }
         }
+        
+        //获取备注列表
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
+            friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
+        }else{
+            let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
+            friendComReq.HTTPMethod = "POST"
+            friendComReq.HTTPBody = NSString(string: "uid=\(uid!)&&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
+            NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                        self.friendComments = NSDictionary(dictionary: jsonObj!)
+                        self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
+                        dispatch_async(dispatch_get_main_queue(), {
+                            self.tableView.reloadData()
+                        })
+                    }
+                }
+            }
+        }
+        tableView.reloadData()
+        
     }
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return indexKeys.count + 2
@@ -218,6 +241,10 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 
                 let namelabel = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: cell.frame.width - avatar.frame.width - 32, height: avatar.frame.height))
                 namelabel.text = friendItem?.objectForKey("uname") as? String
+                if friendComments?.objectForKey("\(fid!)") != nil{
+                    namelabel.text = friendComments?.objectForKey("\(fid!)") as? String
+                }
+                
                 cell.addSubview(namelabel)
             }
         }

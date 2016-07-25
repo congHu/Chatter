@@ -17,6 +17,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     var msg:NSMutableArray?
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var numOfUnread = 0
+    var friendComments:NSDictionary?
     
     @IBOutlet var navBar: UINavigationItem!
     override func viewDidLoad() {
@@ -46,8 +47,11 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: #selector(FirstViewController.timerElapse), userInfo: nil, repeats: true)
         
-        //读取主页消息
+        
+        //头像文件夹
         _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/avatar", withIntermediateDirectories: true, attributes: nil)
+        
+        //读取主页消息
         if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
             msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
             
@@ -56,22 +60,12 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             msg?.writeToFile("\(caches)/msg.plist", atomically: true)
         }
         
-        //获取未读消息数
-        for item in msg!{
-            let msgItem = item as! NSDictionary
-            numOfUnread += msgItem.objectForKey("unread") as! Int
-        }
-        if self.numOfUnread != 0{
-            self.navBar.title = "消息(\(self.numOfUnread))"
-            self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
-        }else{
-            self.navBar.title = "消息"
-            self.tabBarController?.tabBar.items?.first!.badgeValue = nil
-        }
+        
         
     }
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
+        //读取主页消息
         if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
             msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
             
@@ -79,6 +73,25 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             msg = NSMutableArray()
             msg?.writeToFile("\(caches)/msg.plist", atomically: true)
         }
+        
+        //获取备注列表
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
+            friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
+        }else{
+            let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
+            friendComReq.HTTPMethod = "POST"
+            friendComReq.HTTPBody = NSString(string: "uid=\(uid!)&&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
+            NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                        self.friendComments = NSDictionary(dictionary: jsonObj!)
+                        self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
+                    }
+                }
+            }
+        }
+        
         tableView.reloadData()
         
     }
@@ -254,6 +267,10 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         let chatTitle = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: cell.frame.width - 100 - avatar.frame.width, height: 20))
         chatTitle.text = msgItem?.objectForKey("chatname") as? String
+        if friendComments?.objectForKey("\(fid)") != nil{
+            chatTitle.text = friendComments?.objectForKey("\(fid)") as? String
+        }
+        
         cell.addSubview(chatTitle)
         
         let textPV = UILabel(frame: CGRect(x: chatTitle.frame.origin.x, y: 36, width: cell.frame.width - 60 - avatar.frame.width, height: 20))
