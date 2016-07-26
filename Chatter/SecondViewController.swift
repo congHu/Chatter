@@ -181,24 +181,17 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         
     }
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        // TODO: 删掉第一行占位符
-        return indexKeys.count + 2
+        return indexKeys.count + 1
     }
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0{
-            return 1 // 留白区
-        }else if section == 1{
             return 1 // MARK: 功能区行数
+        }else{
+            return numOfRows[section-1]
         }
-        if section > 1{
-            return numOfRows[section-2]
-        }
-        return 0
     }
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        if indexPath.section == 0{
-            return 64
-        }
+        
         return 44
     }
     func sectionIndexTitlesForTableView(tableView: UITableView) -> [String]? {
@@ -206,16 +199,16 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         return indexKeys
     }
     func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if section > 1{
-            return indexKeys[section-2]
+        if section > 0{
+            return indexKeys[section-1]
         }
         return nil
     }
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "friend")
-        if indexPath.section > 1{
+        if indexPath.section > 0{
             if friendList.count != 0{
-                let thisIndex = indexPath.row + (indexPath.section-2)*numOfRows[indexPath.section-2]
+                let thisIndex = indexPath.row + (indexPath.section-1)*numOfRows[indexPath.section-1]
                 let friendItem = friendList.objectAtIndex(thisIndex) as? NSDictionary
                 
                 let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: cell.frame.height - 16, height: cell.frame.height - 16))
