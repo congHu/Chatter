@@ -257,6 +257,8 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         let userVC = UDUserViewController()
         // TODO: 传入uid
         userVC.thisUid = String(sender.tag)
+        userVC.myUID = myUID
+        userVC.acode = myAcode
         hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(userVC, animated: true)
     }

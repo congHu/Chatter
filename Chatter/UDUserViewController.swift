@@ -118,13 +118,13 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
             }
         })
         
+        // MARK: 获取用户信息
         let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(thisUid!)")!)
         NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
             if err == nil{
                 if let data = returnData{
                     let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                     if json != nil{
-                        print(json)
                         if json!.objectForKey("error") == nil{
                             dispatch_async(dispatch_get_main_queue(), {
                                 self.navigationItem.title = json?.objectForKey("uname") as? String
@@ -165,39 +165,43 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
     
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
-        rightToolBar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 70, height: 45))
+        rightToolBar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 76, height: 45))
         rightToolBar.layer.borderWidth = 0.0
         rightToolBar.layer.masksToBounds = true
         
         // TODO: 获取用户的关系, 还差黑名单
-        var toolBarItems:[UIBarButtonItem] = []
+        
         if myUID == thisUid{
             friendRelation = .Myself
             
         }else{
-            let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(thisUid!)")!)
+            let infoResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/isFriend.php")!)
+            infoResq.HTTPMethod = "POST"
+            infoResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&fid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
             NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
                 if err == nil{
                     if let data = returnData{
-                        let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
+                        let json = try! NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
                         if json == nil{
                             dispatch_async(dispatch_get_main_queue(), {
-                                if NSString(data: data, encoding: NSUTF8StringEncoding) == "1"{
+                                if NSString(data:data, encoding: NSUTF8StringEncoding) == "1"{
                                     self.friendRelation = .Friend
                                 }
+                                var toolBarItems:[UIBarButtonItem] = []
                                 switch self.friendRelation {
                                 case .Myself:
+                                    
                                     toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.gotoEdit)))
                                     break
                                 case .Stranger:
-                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
-                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FixedSpace, target: self, action: nil))
-                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.moreMenu)))
+                                    toolBarItems.append(UIBarButtonItem(image: UIImage(named: "addFriend"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
+//                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: self, action: nil))
+                                    toolBarItems.append(UIBarButtonItem(image: UIImage(named: "more"), style: .Plain, target: self, action: #selector(UDUserViewController.moreMenu)))
                                     break
                                 case .Friend:
-                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.gotoChat)))
-                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FixedSpace, target: self, action: nil))
-                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.moreMenu)))
+                                    toolBarItems.append(UIBarButtonItem(image: UIImage(named: "chat"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoChat)))
+//                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: self, action: nil))
+                                    toolBarItems.append(UIBarButtonItem(image: UIImage(named: "more"), style: .Plain, target: self, action: #selector(UDUserViewController.moreMenu)))
                                     break
                                 default:
                                     break
@@ -241,16 +245,22 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
         
     }
     func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
-        switch friendRelation {
-        case .Myself:
-            break
-        case .Friend:
-            break
-        case .Stranger:
-            break
-        case .BlackList:
-            break
+        if buttonIndex == 0{
+            switch friendRelation {
+            case .Myself:
+                break
+            case .Friend:
+                print("删除")
+                break
+            case .Stranger:
+                print("黑名单")
+                break
+            case .BlackList:
+                print("移除黑名单")
+                break
+            }
         }
+        
     }
 
     override func didReceiveMemoryWarning() {
