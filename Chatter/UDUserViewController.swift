@@ -13,6 +13,10 @@ enum UDUserRelation {
     case Stranger
     case BlackList
 }
+//protocol UDSingleChatDelegate {
+//    func pushToChatVCImd(chatVC:UDChatViewController)
+//    
+//}
 class UDUserViewController: UIViewController, UIActionSheetDelegate {
 
     var scrollView:UIScrollView!
@@ -32,6 +36,8 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
     
     var friendComments:NSDictionary?
     var friendRelation:UDUserRelation = .Stranger
+    
+//    var delegate:UDSingleChatDelegate?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -118,7 +124,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
             }
         })
         
-        // MARK: 获取用户信息
+        // TODO: 获取用户信息, 生日、个性签名未处理
         let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(thisUid!)")!)
         NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
             if err == nil{
@@ -224,6 +230,25 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
     }
     func gotoChat(){
         print("chat")
+        // TODO: pop到rootVC 然后push到chatVC
+        let chatVC = UDChatViewController()
+        chatVC.myUID = myUID
+        chatVC.myAcode = acode
+        chatVC.chatroomName = unameLabel.text
+        chatVC.chatroomID = "user\(thisUid!)"
+        
+        navigationController?.popToRootViewControllerAnimated(false)
+        
+        
+//        for vc in (navigationController?.viewControllers)!{
+//            if vc.isKindOfClass(FirstViewController){
+//                let fvc = vc as! FirstViewController
+//                fvc.pushToChatVCImd(chatVC)
+//            }
+//        }
+//        let firstVC = navigationController?.storyboard?.instantiateViewControllerWithIdentifier("firstVC") as! FirstViewController
+        
+//        firstVC.pushToChatVCImd(chatVC)
     }
     func gotoAddFriend(){
         print("add friend")

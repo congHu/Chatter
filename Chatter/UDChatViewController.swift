@@ -17,7 +17,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     var draft:String?
     
     private var buttomBar: UIVisualEffectView!
-    private var tableView:UITableView!
+    var tableView:UITableView!
     
     var inputTextView:UITextView!
     private var buttomOriginY:CGFloat!

@@ -15,6 +15,8 @@
 		6315CF151D27FF0000F25879 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6315CF131D27FF0000F25879 /* LaunchScreen.storyboard */; };
 		6315CF201D27FF0000F25879 /* ChatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6315CF1F1D27FF0000F25879 /* ChatterTests.swift */; };
 		6315CF2B1D27FF0000F25879 /* ChatterUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6315CF2A1D27FF0000F25879 /* ChatterUITests.swift */; };
+		6317321A1D4A4DDA0019B512 /* ThirdViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631732191D4A4DDA0019B512 /* ThirdViewController.swift */; };
+		6317321C1D4A56630019B512 /* UDSearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6317321B1D4A56630019B512 /* UDSearchViewController.swift */; };
 		63182D231D2BC0F60056DF85 /* UDTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63182D221D2BC0F60056DF85 /* UDTextField.swift */; };
 		632C621F1D3CBEF70010C27C /* UDRegViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632C621E1D3CBEF70010C27C /* UDRegViewController.swift */; };
 		63347F7B1D45B23A00400BD5 /* UDChatFunc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */; };
@@ -59,6 +61,8 @@
 		6315CF261D27FF0000F25879 /* ChatterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChatterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6315CF2A1D27FF0000F25879 /* ChatterUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatterUITests.swift; sourceTree = "<group>"; };
 		6315CF2C1D27FF0000F25879 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		631732191D4A4DDA0019B512 /* ThirdViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThirdViewController.swift; sourceTree = "<group>"; };
+		6317321B1D4A56630019B512 /* UDSearchViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDSearchViewController.swift; sourceTree = "<group>"; };
 		63182D221D2BC0F60056DF85 /* UDTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDTextField.swift; sourceTree = "<group>"; };
 		632C621E1D3CBEF70010C27C /* UDRegViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDRegViewController.swift; sourceTree = "<group>"; };
 		63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatFunc.swift; sourceTree = "<group>"; };
@@ -123,6 +127,8 @@
 				63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */,
 				6315CF0A1D27FF0000F25879 /* FirstViewController.swift */,
 				6315CF0C1D27FF0000F25879 /* SecondViewController.swift */,
+				631732191D4A4DDA0019B512 /* ThirdViewController.swift */,
+				6317321B1D4A56630019B512 /* UDSearchViewController.swift */,
 				63A13A311D3F52E200DB7287 /* UDChatViewController.swift */,
 				63829B411D406AEB00316AE3 /* UDUserViewController.swift */,
 				63182D221D2BC0F60056DF85 /* UDTextField.swift */,
@@ -290,6 +296,7 @@
 			files = (
 				632C621F1D3CBEF70010C27C /* UDRegViewController.swift in Sources */,
 				6315CF0D1D27FF0000F25879 /* SecondViewController.swift in Sources */,
+				6317321C1D4A56630019B512 /* UDSearchViewController.swift in Sources */,
 				63829B421D406AEB00316AE3 /* UDUserViewController.swift in Sources */,
 				635902C41D4230C100300A25 /* UDSendStatusView.swift in Sources */,
 				6315CF091D27FF0000F25879 /* AppDelegate.swift in Sources */,
@@ -298,6 +305,7 @@
 				63347F7B1D45B23A00400BD5 /* UDChatFunc.swift in Sources */,
 				638769DE1D3686DE001257DC /* UDLoginViewController.swift in Sources */,
 				635902C21D42237D00300A25 /* UDChatDate.swift in Sources */,
+				6317321A1D4A4DDA0019B512 /* ThirdViewController.swift in Sources */,
 				63A13A321D3F52E200DB7287 /* UDChatViewController.swift in Sources */,
 				63A13A361D3F57CB00DB7287 /* UDChatBubble.swift in Sources */,
 				63182D231D2BC0F60056DF85 /* UDTextField.swift in Sources */,

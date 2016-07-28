@@ -60,7 +60,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             msg?.writeToFile("\(caches)/msg.plist", atomically: true)
         }
         
-        
+        navBar.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(FirstViewController.gotoSearch))
         
     }
     override func viewDidAppear(animated: Bool) {
@@ -306,12 +306,16 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         let chatVC = UDChatViewController()
         chatVC.myUID = uid
         chatVC.myAcode = active
-        chatVC.chatroomName = msgItem?.objectForKey("chatname") as? String
+        
         // TODO: 需要考虑群聊的情况
         let chatType = msgItem?.objectForKey("send_from") as! String
         let chatID = msgItem?.objectForKey("fromid") as! String
         if chatType == "user"{
             chatVC.chatroomID = "\(chatType)\(chatID)"
+            chatVC.chatroomName = msgItem?.objectForKey("chatname") as? String
+            if friendComments?.objectForKey("\(chatID)") != nil{
+                chatVC.chatroomName = friendComments?.objectForKey("\(chatID)") as? String
+            }
         }else if chatType.hasPrefix("group"){
             chatVC.chatroomID = "\(chatType)"
         }
@@ -321,6 +325,20 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
         
     }
+    
+    func pushToChatVCImd(chatVC:UDChatViewController){
+        navigationController?.pushViewController(chatVC, animated: true)
+    }
+    
+    func gotoSearch(){
+        let searchVC = UDSearchViewController()
+        searchVC.myUID = uid
+        searchVC.myAcode = active
+        searchVC.view.backgroundColor = UIColor.whiteColor()
+        hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(searchVC, animated: true)
+    }
+    
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         hidesBottomBarWhenPushed = false

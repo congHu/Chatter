@@ -8,7 +8,7 @@
         <!--First View Controller-->
         <scene sceneID="hNz-n2-bh7">
             <objects>
-                <viewController id="9pv-A4-QxB" customClass="FirstViewController" customModule="Chatter" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="firstVC" id="9pv-A4-QxB" customClass="FirstViewController" customModule="Chatter" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="Ia1-K6-d13"/>
                         <viewControllerLayoutGuide type="bottom" id="4ug-Mw-9AY"/>
@@ -30,7 +30,7 @@
         <!--我的-->
         <scene sceneID="L96-bX-pft">
             <objects>
-                <viewController id="HHV-g1-Jcg" sceneMemberID="viewController">
+                <viewController id="HHV-g1-Jcg" customClass="ThirdViewController" customModule="Chatter" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="udz-tX-2sB"/>
                         <viewControllerLayoutGuide type="bottom" id="EbQ-Ls-DMH"/>
@@ -104,11 +104,11 @@
             </objects>
             <point key="canvasLocation" x="750" y="-320"/>
         </scene>
-        <!--Navigation Controller-->
+        <!--我的-->
         <scene sceneID="NPQ-Bd-uhm">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="KZs-DY-vwN" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" systemItem="more" id="kG0-XW-BAG"/>
+                    <tabBarItem key="tabBarItem" title="我的" image="profile" id="kG0-XW-BAG"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="EZH-vQ-z8i">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -144,7 +144,8 @@
         </scene>
     </scenes>
     <resources>
-        <image name="contact" width="22" height="16"/>
+        <image name="contact" width="26" height="20"/>
         <image name="icon_chat_right" width="26" height="20"/>
+        <image name="profile" width="17" height="16"/>
     </resources>
 </document>
