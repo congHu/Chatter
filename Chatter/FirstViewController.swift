@@ -25,7 +25,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         // Do any additional setup after loading the view, typically from a nib.
         
         print(NSSearchPathForDirectoriesInDomains(.ApplicationDirectory, .UserDomainMask, true))
-        
+        UDSingleChat.rootVC = self
         //是否登录。获取uid和acode
         if NSUserDefaults.standardUserDefaults().objectForKey("user") == nil{
             let loginVC = UDLoginViewController()
@@ -37,6 +37,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             active = user?.objectForKey("activecode") as? String
             print("uid: \(uid!) | acode: \(active!)")
         }
+        
+        
         
         navBar.title = "连接中..."
         
@@ -212,6 +214,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     }
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let msgItem = msg?.objectAtIndex(indexPath.row) as? NSDictionary
+        // TODO: 加入Pan手势的滑动删除
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "sd")
         
         let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: 48, height: 48))
@@ -275,7 +278,30 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         let textPV = UILabel(frame: CGRect(x: chatTitle.frame.origin.x, y: 36, width: cell.frame.width - 60 - avatar.frame.width, height: 20))
         textPV.textColor = UIColor.grayColor()
-        textPV.text = msgItem?.objectForKey("body") as? String
+        let msgType = msgItem?.objectForKey("type") as? String
+        switch msgType! {
+        case "string":
+            textPV.text = msgItem?.objectForKey("body") as? String
+            break
+        case "req":
+            textPV.text = "请求添加为好友"
+            break
+        case "image":
+            textPV.text = "[图片]"
+            break
+        case "voice":
+            textPV.text = "[语音]"
+            break
+        case "video":
+            textPV.text = "[视频]"
+            break
+        case "location":
+            textPV.text = "[位置]"
+            break
+        default:
+            break
+        }
+        
         textPV.font = UIFont.systemFontOfSize(14)
         cell.addSubview(textPV)
         
@@ -319,6 +345,9 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         }else if chatType.hasPrefix("group"){
             chatVC.chatroomID = "\(chatType)"
         }
+        if msgItem?.objectForKey("type") as! String == "req"{
+            chatVC.notFriendYet = true
+        }
         
         chatVC.view.backgroundColor = UIColor.whiteColor()
         navigationController?.pushViewController(chatVC, animated: true)
@@ -335,14 +364,17 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         let searchVC = UDSearchViewController()
         searchVC.myUID = uid
         searchVC.myAcode = active
+        searchVC.rootVC = self
         searchVC.view.backgroundColor = UIColor.whiteColor()
         hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(searchVC, animated: true)
     }
     
+    
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         hidesBottomBarWhenPushed = false
+        
     }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -350,5 +382,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     }
 
 
+}
+class UDSingleChat{
+    static var rootVC:FirstViewController?
 }
 

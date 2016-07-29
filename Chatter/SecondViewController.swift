@@ -10,6 +10,7 @@ import UIKit
 
 class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
+    
     var tableView:UITableView!
     var friendList:NSMutableArray!
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
@@ -252,9 +253,28 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         return cell
     }
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        print(indexPath.row)
+        // TODO: 点击进入用户详情
+        if indexPath.section == 0{
+            
+        }else if indexPath.section == 1{
+            let thisIndex = indexPath.row + (indexPath.section-1)*numOfRows[indexPath.section-1]
+            let friendItem = friendList.objectAtIndex(thisIndex) as? NSDictionary
+            let userVC = UDUserViewController()
+            // MARK: 进入用户详情
+            userVC.thisUid = "\(friendItem?.objectForKey("uid") as! Int)"
+            userVC.myUID = uid
+            userVC.acode = active
+            userVC.needToTab = true
+            userVC.rootVC = UDSingleChat.rootVC
+            hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(userVC, animated: true)
+        }
     }
-    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        hidesBottomBarWhenPushed = false
+        
+    }
     
     
     override func didReceiveMemoryWarning() {

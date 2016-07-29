@@ -17,7 +17,7 @@ enum UDUserRelation {
 //    func pushToChatVCImd(chatVC:UDChatViewController)
 //    
 //}
-class UDUserViewController: UIViewController, UIActionSheetDelegate {
+class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertViewDelegate {
 
     var scrollView:UIScrollView!
     
@@ -25,11 +25,18 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
     var acode:String?
     var thisUid:String?
     var rootVC:FirstViewController?
+    var justPop = false
+    var needToTab = false
+//    var tabDelegate:UDSingleChatDelegate?
     
     var rightToolBar:UIToolbar!
     var bgImgView:UIButton!
     var avatar:UIButton!
     var unameLabel:UILabel!
+    
+    // TODO: 修改备注按钮
+    var setFriendCommentBtn:UIButton!
+    
     var subLabel:UILabel?
     
     var infoTableView:UITableView!
@@ -37,6 +44,8 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
     
     var friendComments:NSDictionary?
     var friendRelation:UDUserRelation = .Stranger
+    
+    var reqMsg:String?
     
 //    var delegate:UDSingleChatDelegate?
     
@@ -196,10 +205,6 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
                                 }
                                 var toolBarItems:[UIBarButtonItem] = []
                                 switch self.friendRelation {
-                                case .Myself:
-                                    
-                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(UDUserViewController.gotoEdit)))
-                                    break
                                 case .Stranger:
                                     toolBarItems.append(UIBarButtonItem(image: UIImage(named: "addFriend"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
 //                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: self, action: nil))
@@ -224,35 +229,61 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
             
         }
         
+        // MARK: 生成好友请求信息
+        if NSUserDefaults.standardUserDefaults().objectForKey("reqMsg") == nil{
+            let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(myUID!)")!)
+            NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                        if json != nil{
+                            if json!.objectForKey("error") == nil{
+                                self.reqMsg = "我是\(json?.objectForKey("uname") as! String)"
+                                NSUserDefaults.standardUserDefaults().setObject(self.reqMsg, forKey: "reqMsg")
+                            }
+                        }
+                    }
+                }
+            })
+            
+        }else{
+            reqMsg = "我是\(NSUserDefaults.standardUserDefaults().objectForKey("reqMsg") as! String)"
+        }
+        
     }
-    
-    func gotoEdit(){
-        print("edit")
-    }
+
     func gotoChat(){
-        print("chat")
-        // TODO: pop到rootVC 然后push到chatVC
         let chatVC = UDChatViewController()
         chatVC.myUID = myUID
         chatVC.myAcode = acode
         chatVC.chatroomName = unameLabel.text
         chatVC.chatroomID = "user\(thisUid!)"
+        // MARK: pop到消息界面再进聊天界面
+        if justPop {
+            navigationController?.popViewControllerAnimated(true)
+        }else{
+            
+            if needToTab{
+                tabBarController?.selectedIndex = 0
+                navigationController?.popToRootViewControllerAnimated(false)
+            }else{
+                navigationController?.popToRootViewControllerAnimated(false)
+            }
+            rootVC?.pushToChatVCImd(chatVC)
+        }
         
-        navigationController?.popToRootViewControllerAnimated(false)
-        rootVC?.pushToChatVCImd(chatVC)
-        
-//        for vc in (navigationController?.viewControllers)!{
-//            if vc.isKindOfClass(FirstViewController){
-//                let fvc = vc as! FirstViewController
-//                fvc.pushToChatVCImd(chatVC)
-//            }
-//        }
-//        let firstVC = navigationController?.storyboard?.instantiateViewControllerWithIdentifier("firstVC") as! FirstViewController
-        
-//        firstVC.pushToChatVCImd(chatVC)
+    }
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        if buttonIndex == 1{
+            print("add friend with \(alertView.textFieldAtIndex(0)?.text)")
+        }
     }
     func gotoAddFriend(){
-        print("add friend")
+        let alert = UIAlertView(title: nil, message: "输入验证信息", delegate: self, cancelButtonTitle: "取消")
+        alert.addButtonWithTitle("发送")
+        alert.alertViewStyle = .PlainTextInput
+        alert.textFieldAtIndex(0)?.text = reqMsg
+        alert.show()
     }
     func moreMenu(){
         switch friendRelation {

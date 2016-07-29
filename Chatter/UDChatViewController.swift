@@ -8,17 +8,21 @@
 
 import UIKit
 
-class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate {
+class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, UIActionSheetDelegate {
 
     var chatroomID:String?
     var chatroomName:String?
     var myUID:String?
     var myAcode:String?
+    var notFriendYet = false
+    
+    // TODO: 草稿功能
     var draft:String?
     var rootVC:FirstViewController?
     
     private var buttomBar: UIVisualEffectView!
     var tableView:UITableView!
+    var moreType:UIButton!
     
     var inputTextView:UITextView!
     private var buttomOriginY:CGFloat!
@@ -31,12 +35,12 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     private var isScrollToButtom = true
     //private var keyboardAnimating = false
     
-    
+    var addFriendComfirm:UIButton?
+    var blackListOption:UIButton?
     
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var msgList:NSMutableArray!
     
-    let testMsg = ["你好","你好！😄","我们来测试一下吗？","好啊！","那就开始了喔","准备好了","Lorem ipsum dolor sit amet","consectetur adipisicing elit","仂猀呧觖陏鸆楥鈺劦圪瓬杈怭穻杈趓乇抯駃鉏。","爿旂怴裉祋靃葳鄎扙朹奅旲枌怙匉翜丌肸蜞塎。"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -56,18 +60,38 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         buttomBar = UIVisualEffectView(frame: CGRect(x: 0, y: view.frame.height - 40, width: view.frame.width, height: 40))
         buttomBar.effect = UIBlurEffect(style: .ExtraLight)
         view.addSubview(buttomBar)
-        
         inputTextView = UITextView(frame: CGRect(x: 8, y: 4, width: buttomBar.frame.width - 40, height: buttomBar.frame.height - 8))
         inputTextView.backgroundColor = UIColor.clearColor()
         inputTextView.layer.borderColor = UIColor.grayColor().CGColor
         inputTextView.layer.borderWidth = 1
         inputTextView.layer.cornerRadius = 8
         buttomBar.addSubview(inputTextView)
-        buttomOriginY = buttomBar.frame.origin.y
         inputTextView.delegate = self
         inputTextView.returnKeyType = .Send
         inputTextView.enablesReturnKeyAutomatically = true
         
+        moreType = UIButton(type: .ContactAdd)
+        moreType.frame = CGRect(x: inputTextView.frame.origin.x + inputTextView.frame.width, y: 4, width: buttomBar.frame.height - 7, height: buttomBar.frame.height - 7)
+        buttomBar.addSubview(moreType)
+        
+        
+        // MARK: 请求加为好友
+        if notFriendYet{
+            inputTextView.alpha = 0
+            moreType.alpha = 0
+            addFriendComfirm = UIButton(type: .System)
+            addFriendComfirm?.frame = inputTextView.frame
+            buttomBar.addSubview(addFriendComfirm!)
+            addFriendComfirm?.setTitle("添加为好友", forState: .Normal)
+            blackListOption = UIButton(frame: moreType.frame)
+            blackListOption?.setImage(UIImage(named: "more"), forState: .Normal)
+            buttomBar.addSubview(blackListOption!)
+            
+            addFriendComfirm?.addTarget(self, action: #selector(UDChatViewController.comfirmFriend), forControlEvents: .TouchUpInside)
+            blackListOption?.addTarget(self, action: #selector(UDChatViewController.showBlackListOption), forControlEvents: .TouchUpInside)
+        }
+        
+        buttomOriginY = buttomBar.frame.origin.y
         // TODO: 切换输入法bug
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillShow(_:)), name: UIKeyboardWillShowNotification, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillUnShow(_:)), name: UIKeyboardWillHideNotification, object: nil)
@@ -140,6 +164,9 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             if sendFromType == "user"{
                 let fromID = curItem.objectForKey("fromid") as! String
                 // TODO: 还没考虑群聊的情况, 和其他类型消息的情况
+                if curItem.objectForKey("type") as! String == "req"{
+                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil)
+                }
                 if fromID != myUID{
                     bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
                 }else{
@@ -147,6 +174,9 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                 }
             }else if sendFromType == "system"{
                 bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil)
+            }else if sendFromType == "timeMark"{
+                
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: UDChatDate.longTime(curItem.objectForKey("time") as! String)!, uid: nil)
             }
 //            else if sendFromType.hasPrefix("group"){
 //                
@@ -258,11 +288,19 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     
     func gotoUser(sender:UIButton){
         let userVC = UDUserViewController()
-        // TODO: 传入uid
+        // MARK: 进入用户详情
         userVC.thisUid = String(sender.tag)
         userVC.myUID = myUID
         userVC.acode = myAcode
         userVC.rootVC = self.rootVC
+        if chatroomID != nil{
+            if chatroomID!.hasPrefix("user"){
+                if NSString(string: chatroomID!).substringFromIndex(4) == String(sender.tag){
+                    userVC.justPop = true
+                }
+            }
+        }
+        
         hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(userVC, animated: true)
     }
@@ -290,13 +328,14 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             }
             if requireMarker{
                 let timeMarker = NSMutableDictionary()
-                timeMarker.setValue("system", forKey: "send_from")
+                timeMarker.setValue("timeMark", forKey: "send_from")
                 timeMarker.setValue("0", forKey: "fromid")
                 timeMarker.setValue("string", forKey: "type")
                 timeMarker.setValue(UDChatDate.longTime(timeStr)!, forKey: "body")
                 timeMarker.setValue(timeStr, forKey: "time")
                 timeMarker.setValue("\(chatroomName!)", forKey: "chatname")
                 msgList.addObject(timeMarker)
+                
             }
             
             let msgToSend = NSMutableDictionary()
@@ -409,7 +448,18 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         }
         return true
     }
-
+    
+    func comfirmFriend(){
+        print("确认添加好友")
+    }
+    func showBlackListOption(){
+        UIActionSheet(title: "添加黑名单防止该用户骚扰", delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "添加黑名单").showInView(view)
+    }
+    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+        if buttonIndex == 0{
+            print("添加黑名单")
+        }
+    }
     /*
     // MARK: - Navigation
 

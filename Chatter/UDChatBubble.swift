@@ -12,6 +12,7 @@ enum UDChatBubbleStyle {
     case Right
     case Left
     case System
+    case Req
 }
 
 class UDChatBubble: UIView {
@@ -58,6 +59,15 @@ class UDChatBubble: UIView {
         
         switch bubbleStyle {
         case .Left:
+            textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
+            bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.15, y: 0, width: size.width + 16, height: size.height + 16))
+            bubbleBG.backgroundColor = UIColor(r: 53, g: 152, b: 219, a: 225)
+            bubbleBG.layer.cornerRadius = 8
+            avatar = UIButton(frame: CGRect(x: 8, y: 0, width: UIScreen.mainScreen().bounds.width*0.1, height: UIScreen.mainScreen().bounds.width*0.1))
+            avatar?.tag = Int(uid!)!
+            break
+            // TODO: 好友请求显示
+        case .Req:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
             bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.15, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 53, g: 152, b: 219, a: 225)
@@ -135,6 +145,15 @@ class UDChatBubble: UIView {
         let context = UIGraphicsGetCurrentContext()
         switch bubbleStyle {
         case .Left:
+            let leftEdge = bubbleBG.frame.origin.x
+            CGContextSetFillColorWithColor(context, UIColor(r: 53, g: 152, b: 219, a: 225).CGColor)
+            CGContextBeginPath(context)
+            CGContextMoveToPoint(context, leftEdge - 3.464, 8)
+            CGContextAddLineToPoint(context, leftEdge, 6)
+            CGContextAddLineToPoint(context, leftEdge, 10)
+            CGContextFillPath(context)
+            break
+        case .Req:
             let leftEdge = bubbleBG.frame.origin.x
             CGContextSetFillColorWithColor(context, UIColor(r: 53, g: 152, b: 219, a: 225).CGColor)
             CGContextBeginPath(context)
