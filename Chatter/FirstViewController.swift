@@ -306,7 +306,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         let chatVC = UDChatViewController()
         chatVC.myUID = uid
         chatVC.myAcode = active
-        
+        chatVC.rootVC = self
         // TODO: 需要考虑群聊的情况
         let chatType = msgItem?.objectForKey("send_from") as! String
         let chatID = msgItem?.objectForKey("fromid") as! String
@@ -327,6 +327,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     }
     
     func pushToChatVCImd(chatVC:UDChatViewController){
+        hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(chatVC, animated: true)
     }
     

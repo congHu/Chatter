@@ -24,6 +24,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
     var myUID:String?
     var acode:String?
     var thisUid:String?
+    var rootVC:FirstViewController?
     
     var rightToolBar:UIToolbar!
     var bgImgView:UIButton!
@@ -238,7 +239,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate {
         chatVC.chatroomID = "user\(thisUid!)"
         
         navigationController?.popToRootViewControllerAnimated(false)
-        
+        rootVC?.pushToChatVCImd(chatVC)
         
 //        for vc in (navigationController?.viewControllers)!{
 //            if vc.isKindOfClass(FirstViewController){

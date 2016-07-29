@@ -15,6 +15,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     var myUID:String?
     var myAcode:String?
     var draft:String?
+    var rootVC:FirstViewController?
     
     private var buttomBar: UIVisualEffectView!
     var tableView:UITableView!
@@ -29,6 +30,8 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     private var isKeyboardShowed = false
     private var isScrollToButtom = true
     //private var keyboardAnimating = false
+    
+    
     
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var msgList:NSMutableArray!
@@ -259,6 +262,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         userVC.thisUid = String(sender.tag)
         userVC.myUID = myUID
         userVC.acode = myAcode
+        userVC.rootVC = self.rootVC
         hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(userVC, animated: true)
     }
