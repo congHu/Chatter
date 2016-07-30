@@ -19,10 +19,13 @@ class UDSearchViewController: UIViewController, UITableViewDelegate, UITableView
     
     var searchResult:NSArray?
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
+    
+    var pushFromTab2 = false
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        navigationItem.title = "搜索好友"
+        
         searchBar = UISearchBar(frame: CGRect(x: 0, y: 64, width: view.frame.width, height: 44))
         searchBar.placeholder = "输入邮箱地址或用户名"
         searchBar.delegate = self
@@ -126,6 +129,7 @@ class UDSearchViewController: UIViewController, UITableViewDelegate, UITableView
     func searchBarSearchButtonClicked(searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
         print("search")
+        // MARK: 搜索
         NSURLConnection.sendAsynchronousRequest(NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/searchFriend.php?input=\(searchBar.text!)")!), queue: NSOperationQueue()) { (resp:NSURLResponse?, returnDara:NSData?, err:NSError?) in
             if err == nil{
                 if let data = returnDara{
@@ -151,7 +155,7 @@ class UDSearchViewController: UIViewController, UITableViewDelegate, UITableView
                 userVC.myUID = myUID
                 userVC.acode = myAcode
                 userVC.rootVC = self.rootVC
-                
+                userVC.needToTab = pushFromTab2
                 hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(userVC, animated: true)
             }

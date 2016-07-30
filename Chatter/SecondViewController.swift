@@ -246,6 +246,16 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 
                 cell.addSubview(namelabel)
             }
+        }else if indexPath.section == 0{
+            if indexPath.row == 0{
+                let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: cell.frame.height - 16, height: cell.frame.height - 16))
+                avatar.backgroundColor = UIColor.grayColor()
+                avatar.image = UIImage(named: "addFriendGreen")
+                cell.addSubview(avatar)
+                let namelabel = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: cell.frame.width - avatar.frame.width - 32, height: avatar.frame.height))
+                namelabel.text = "添加好友"
+                cell.addSubview(namelabel)
+            }
         }
         
         
@@ -255,7 +265,14 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         // TODO: 点击进入用户详情
         if indexPath.section == 0{
-            
+            let searchVC = UDSearchViewController()
+            searchVC.myUID = uid
+            searchVC.myAcode = active
+            searchVC.pushFromTab2 = true
+            searchVC.rootVC = UDSingleChat.rootVC
+            searchVC.view.backgroundColor = UIColor.whiteColor()
+            hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(searchVC, animated: true)
         }else if indexPath.section == 1{
             let thisIndex = indexPath.row + (indexPath.section-1)*numOfRows[indexPath.section-1]
             let friendItem = friendList.objectAtIndex(thisIndex) as? NSDictionary

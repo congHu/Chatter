@@ -64,7 +64,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                     if json != nil{
                         if json!.objectForKey("error") == nil{
                             self.infos = NSDictionary(dictionary: json!)
-                            print(self.infos)
+//                            print(self.infos)
                             self.tableView.reloadData()
                         }
                     }

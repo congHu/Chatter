@@ -276,6 +276,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
     func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
         if buttonIndex == 1{
             print("add friend with \(alertView.textFieldAtIndex(0)?.text)")
+            // TODO: 发送好友请求
         }
     }
     func gotoAddFriend(){

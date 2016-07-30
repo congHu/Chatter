@@ -448,9 +448,24 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         }
         return true
     }
-    
+    //我们已经成为好友啦，可以愉快地开始聊天啦!
     func comfirmFriend(){
         print("确认添加好友")
+        let thisChatID = NSString(string: chatroomID!).substringFromIndex(4)
+        let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/addFriend.php")!)
+        resq.HTTPMethod = "POST"
+        resq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisChatID)").dataUsingEncoding(NSUTF8StringEncoding)
+        NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+            if err == nil{
+                if let data = returnData{
+                    let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                    if json?.objectForKey("error") == nil{
+                        // TODO: 添加时间marker，添加己方消息，更新主页消息显示，消息发送到对方
+                    }
+                    
+                }
+            }
+        }
     }
     func showBlackListOption(){
         UIActionSheet(title: "添加黑名单防止该用户骚扰", delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "添加黑名单").showInView(view)
