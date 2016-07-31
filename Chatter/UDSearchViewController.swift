@@ -57,7 +57,7 @@ class UDSearchViewController: UIViewController, UITableViewDelegate, UITableView
         if searchResult != nil{
             if searchResult?.count > 0{
                 let res = searchResult?.objectAtIndex(indexPath.row) as! NSDictionary
-                print(res)
+//                print(res)
                 // MARK: 头像
                 let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: 48, height: 48))
                 avatar.backgroundColor = UIColor.grayColor()

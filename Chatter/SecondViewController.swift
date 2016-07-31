@@ -43,9 +43,15 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         //indexKeys.append("功能")
         for elem in friendList{
             let item = (elem as! NSDictionary).objectForKey("pinyin") as! NSString
-            var upperChar = item.substringToIndex(1).uppercaseString
-            if upperChar == "" || Int(upperChar) != nil{
+            
+            var upperChar = ""
+            if item == ""{
                 upperChar = "#"
+            }else{
+                upperChar = item.substringToIndex(1).uppercaseString
+                if Int(upperChar) != nil{
+                    upperChar = "#"
+                }
             }
             
             var isExist = false
@@ -64,8 +70,17 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         for i in 0..<indexKeys.count{
             var numOfRow = 0
             for elem in friendList{
-                let upperChar = (elem as! NSDictionary).objectForKey("pinyin") as! NSString
-                if upperChar.substringToIndex(1).uppercaseString == indexKeys[i]{
+                let item = (elem as! NSDictionary).objectForKey("pinyin") as! NSString
+                var upperChar = ""
+                if item == ""{
+                    upperChar = "#"
+                }else{
+                    upperChar = item.substringToIndex(1).uppercaseString
+                    if Int(upperChar) != nil{
+                        upperChar = "#"
+                    }
+                }
+                if upperChar == indexKeys[i]{
                     numOfRow += 1
                 }
             }
@@ -119,10 +134,16 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                     //self.indexKeys.append("功能")
                     for elem in self.friendList{
                         let item = (elem as! NSDictionary).objectForKey("pinyin") as! NSString
-                        var upperChar = item.substringToIndex(1).uppercaseString
-                        if upperChar == "" || Int(upperChar) != nil{
+                        var upperChar = ""
+                        if item == ""{
                             upperChar = "#"
+                        }else{
+                            upperChar = item.substringToIndex(1).uppercaseString
+                            if Int(upperChar) != nil{
+                                upperChar = "#"
+                            }
                         }
+                        
                         var isExist = false
                         for char in self.indexKeys{
                             if char == upperChar{
@@ -139,10 +160,21 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                     for i in 0..<self.indexKeys.count{
                         var numOfRow = 0
                         for elem in self.friendList{
-                            let upperChar = (elem as! NSDictionary).objectForKey("pinyin") as! NSString
-                            if upperChar.substringToIndex(1).uppercaseString == self.indexKeys[i]{
+                            
+                            let item = (elem as! NSDictionary).objectForKey("pinyin") as! NSString
+                            var upperChar = ""
+                            if item == ""{
+                                upperChar = "#"
+                            }else{
+                                upperChar = item.substringToIndex(1).uppercaseString
+                                if Int(upperChar) != nil{
+                                    upperChar = "#"
+                                }
+                            }
+                            if upperChar == self.indexKeys[i]{
                                 numOfRow += 1
                             }
+                            
                         }
                         self.numOfRows.append(numOfRow)
                     }
@@ -214,7 +246,10 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 
                 let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: cell.frame.height - 16, height: cell.frame.height - 16))
                 avatar.backgroundColor = UIColor.grayColor()
-                let fid = friendItem?.objectForKey("uid") as? Int
+                var fid = friendItem?.objectForKey("uid") as? String
+                if friendItem?.objectForKey("uid") as? String == nil{
+                    fid = "\(friendItem?.objectForKey("uid") as! Int)"
+                }
                 let avatarImgPath = "\(caches)/avatar/user\(fid!).jpg"
                 if NSFileManager.defaultManager().fileExistsAtPath(avatarImgPath){
                     avatar.image = UIImage(contentsOfFile: avatarImgPath)
@@ -273,12 +308,17 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
             searchVC.view.backgroundColor = UIColor.whiteColor()
             hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(searchVC, animated: true)
-        }else if indexPath.section == 1{
+        }else{
             let thisIndex = indexPath.row + (indexPath.section-1)*numOfRows[indexPath.section-1]
             let friendItem = friendList.objectAtIndex(thisIndex) as? NSDictionary
             let userVC = UDUserViewController()
             // MARK: 进入用户详情
-            userVC.thisUid = "\(friendItem?.objectForKey("uid") as! Int)"
+            if friendItem?.objectForKey("uid") as? String != nil{
+                userVC.thisUid = friendItem?.objectForKey("uid") as? String
+            }else{
+                userVC.thisUid = "\(friendItem?.objectForKey("uid") as! Int)"
+            }
+            
             userVC.myUID = uid
             userVC.acode = active
             userVC.needToTab = true

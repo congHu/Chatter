@@ -451,19 +451,122 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     //我们已经成为好友啦，可以愉快地开始聊天啦!
     func comfirmFriend(){
         print("确认添加好友")
+//        let thisChatID = NSString(string: chatroomID!).substringFromIndex(4)
+        
+        //比较时间，判断是否添加时间标记
+        let date = NSDate()
+        let formate = NSDateFormatter()
+        formate.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let timeStr = formate.stringFromDate(date)
+        
+        var requireMarker = true
+        
+        if msgList.count != 0{
+            let lastTime = (msgList.lastObject as! NSDictionary).objectForKey("time") as! String
+            requireMarker = UDChatDate.isTimeToAddTimeMarker(timeStr, lastTime)
+        }
+        if requireMarker{
+            let timeMarker = NSMutableDictionary()
+            timeMarker.setValue("timeMark", forKey: "send_from")
+            timeMarker.setValue("0", forKey: "fromid")
+            timeMarker.setValue("string", forKey: "type")
+            timeMarker.setValue(UDChatDate.longTime(timeStr)!, forKey: "body")
+            timeMarker.setValue(timeStr, forKey: "time")
+            timeMarker.setValue("\(chatroomName!)", forKey: "chatname")
+            msgList.addObject(timeMarker)
+            
+        }
+        
+        let msgToSend = NSMutableDictionary()
+        
+//        if chatroomID!.hasPrefix("user"){
         let thisChatID = NSString(string: chatroomID!).substringFromIndex(4)
+        //生成消息
+        msgToSend.setValue("user", forKey: "send_from")
+        msgToSend.setValue("\(myUID!)", forKey: "fromid")
+        
+        // TODO: 需要支持更多的type
+        msgToSend.setValue("string", forKey: "type")
+        
+        msgToSend.setValue("我们已经成为好友啦，可以愉快地开始聊天啦!", forKey: "body")
+        
+        msgToSend.setValue("\(timeStr)", forKey: "time")
+        msgToSend.setValue("\(chatroomName!)", forKey: "chatname")
+        msgToSend.setValue("0", forKey: "sendStatus")
+        
+        //写入文件
+        msgList.addObject(msgToSend)
+        tableView.reloadData()
+        
+        if tableView.contentSize.height > tableView.frame.height{
+            tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
+        }
+        
+        let msgPath = "\(caches)/\(chatroomID!).plist"
+        msgList.writeToFile(msgPath, atomically: true)
+        
+        
+        //更新首页消息列表
+        let homePageMsg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
+        var reverseAry = homePageMsg?.reverseObjectEnumerator().allObjects
+        for i in 0..<reverseAry!.count{
+            let dic = reverseAry![i] as! NSDictionary
+            if dic.objectForKey("send_from") as! String == "user" && dic.objectForKey("fromid") as! String == "\(thisChatID)"{
+                reverseAry?.removeAtIndex(i)
+                break
+            }
+        }
+        let msgShowInHomePage = NSMutableDictionary(dictionary: msgToSend)
+        msgShowInHomePage.setValue(0, forKey: "unread")
+        msgShowInHomePage.setValue("\(thisChatID)", forKey: "fromid")
+        reverseAry?.append(msgShowInHomePage)
+        homePageMsg?.removeAllObjects()
+        reverseAry = (reverseAry! as NSArray).reverseObjectEnumerator().allObjects
+        for item in reverseAry!{
+            homePageMsg?.addObject(item)
+        }
+        homePageMsg?.writeToFile("\(caches)/msg.plist", atomically: true)
+        
         let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/addFriend.php")!)
         resq.HTTPMethod = "POST"
         resq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisChatID)").dataUsingEncoding(NSUTF8StringEncoding)
         NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+            var sendSuccess = false
             if err == nil{
                 if let data = returnData{
+                    print(NSString(data: data, encoding: NSUTF8StringEncoding)!)
                     let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                     if json?.objectForKey("error") == nil{
                         // TODO: 添加时间marker，添加己方消息，更新主页消息显示，消息发送到对方
+                        sendSuccess = true
                     }
                     
                 }
+            }
+            if sendSuccess {
+                dispatch_async(dispatch_get_main_queue(), {
+                    self.addFriendComfirm?.alpha = 0
+                    self.blackListOption?.alpha = 0
+                    self.inputTextView.alpha = 1
+                    self.moreType.alpha = 1
+                })
+            }else{
+                let timeMarker = NSMutableDictionary()
+                timeMarker.setValue("system", forKey: "send_from")
+                timeMarker.setValue("0", forKey: "fromid")
+                timeMarker.setValue("string", forKey: "type")
+                timeMarker.setValue("很抱歉，添加好友失败", forKey: "body")
+                timeMarker.setValue(timeStr, forKey: "time")
+                timeMarker.setValue("\(self.chatroomName!)", forKey: "chatname")
+                self.msgList.addObject(timeMarker)
+                self.msgList.writeToFile(msgPath, atomically: true)
+                
+                dispatch_async(dispatch_get_main_queue(), {
+                    self.tableView.reloadData()
+                    if self.tableView.contentSize.height > self.tableView.frame.height{
+                        self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
+                    }
+                })
             }
         }
     }

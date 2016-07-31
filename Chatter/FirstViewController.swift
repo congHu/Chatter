@@ -26,6 +26,45 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         print(NSSearchPathForDirectoriesInDomains(.ApplicationDirectory, .UserDomainMask, true))
         UDSingleChat.rootVC = self
+        
+        //读取主页消息
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
+            msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
+            
+        }else{
+            msg = NSMutableArray()
+            msg?.writeToFile("\(caches)/msg.plist", atomically: true)
+        }
+        
+        tableView = UITableView(frame: view.frame)
+        view.addSubview(tableView)
+        tableView.delegate = self
+        tableView.dataSource = self
+        
+        if NSUserDefaults.standardUserDefaults().objectForKey("user") == nil{
+            let loginVC = UDLoginViewController()
+            presentViewController(loginVC, animated: false, completion: nil)
+        }
+        
+        
+        navBar.title = "连接中..."
+        
+        
+        
+        NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: #selector(FirstViewController.timerElapse), userInfo: nil, repeats: true)
+        
+        
+        //头像文件夹
+        _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/avatar", withIntermediateDirectories: true, attributes: nil)
+        
+        
+        
+        navBar.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(FirstViewController.gotoSearch))
+        
+    }
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
         //是否登录。获取uid和acode
         if NSUserDefaults.standardUserDefaults().objectForKey("user") == nil{
             let loginVC = UDLoginViewController()
@@ -36,65 +75,64 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             uid = user?.objectForKey("uid") as? String
             active = user?.objectForKey("activecode") as? String
             print("uid: \(uid!) | acode: \(active!)")
-        }
-        
-        
-        
-        navBar.title = "连接中..."
-        
-        tableView = UITableView(frame: view.frame)
-        view.addSubview(tableView)
-        tableView.delegate = self
-        tableView.dataSource = self
-        
-        NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: #selector(FirstViewController.timerElapse), userInfo: nil, repeats: true)
-        
-        
-        //头像文件夹
-        _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/avatar", withIntermediateDirectories: true, attributes: nil)
-        
-        //读取主页消息
-        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
-            msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
             
-        }else{
-            msg = NSMutableArray()
-            msg?.writeToFile("\(caches)/msg.plist", atomically: true)
-        }
-        
-        navBar.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(FirstViewController.gotoSearch))
-        
-    }
-    override func viewDidAppear(animated: Bool) {
-        super.viewDidAppear(animated)
-        //读取主页消息
-        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
-            msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
+            //读取主页消息
+            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/msg.plist"){
+                msg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
+                
+            }else{
+                msg = NSMutableArray()
+                msg?.writeToFile("\(caches)/msg.plist", atomically: true)
+            }
             
-        }else{
-            msg = NSMutableArray()
-            msg?.writeToFile("\(caches)/msg.plist", atomically: true)
-        }
-        
-        //获取备注列表
-        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
-            friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
-        }else{
-            let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
-            friendComReq.HTTPMethod = "POST"
-            friendComReq.HTTPBody = NSString(string: "uid=\(uid!)&&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
-            NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
-                if err == nil{
-                    if let data = returnData{
-                        let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
-                        self.friendComments = NSDictionary(dictionary: jsonObj!)
-                        self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
+            numOfUnread = 0
+            for item in msg!{
+                let msgItem = item as! NSDictionary
+                let unread = msgItem.objectForKey("unread") as! Int
+                numOfUnread += unread
+            }
+            if self.numOfUnread != 0{
+                self.navBar.title = "消息(\(self.numOfUnread))"
+                self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
+            }else{
+                self.navBar.title = "消息"
+                self.tabBarController?.tabBar.items?.first!.badgeValue = nil
+            }
+            
+            
+            //获取备注列表
+            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
+                friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
+            }else{
+                
+                let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
+                friendComReq.HTTPMethod = "POST"
+                friendComReq.HTTPBody = NSString(string: "uid=\(uid!)&&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
+                NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    if err == nil{
+                        if let data = returnData{
+//                            print(NSString(data: data, encoding: NSUTF8StringEncoding))
+                            let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if jsonObj != nil{
+                                self.friendComments = NSDictionary(dictionary: jsonObj!)
+                                self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
+                            }
+                            
+                        }
                     }
                 }
             }
+            
+            
+            
+            
+            tableView.reloadData()
+            
         }
         
-        tableView.reloadData()
+        
+        
+        
         
     }
     
@@ -126,8 +164,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                     for ins in 0..<reMsg!.count{
                                         let dic = reMsg![ins] as! NSDictionary
                                         if dic.objectForKey("send_from") as! String == sendFromType && dic.objectForKey("fromid") as! String == sendFromID{
-                                            let lastUnread = dic.objectForKey("unread") as! Int
-                                            unread += lastUnread
+                                            unread = dic.objectForKey("unread") as! Int + 1
                                             reMsg?.removeAtIndex(ins)
                                             break
                                         }
@@ -135,6 +172,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                     
                                     msgItem.setObject(unread, forKey: "unread")
                                     self.numOfUnread += unread
+                                    print(self.numOfUnread)
                                     
                                     reMsg?.append(msgItem)
                                     
@@ -246,19 +284,19 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         cell.addSubview(avatar)
         
-        let timeLabel = UILabel(frame: CGRect(x: cell.frame.width - 68, y: 8, width: 60, height: 20))
+        let timeLabel = UILabel(frame: CGRect(x: view.frame.width - 68, y: 8, width: 60, height: 20))
         timeLabel.text = UDChatDate.shortTime(msgItem?.objectForKey("time") as! String)
         timeLabel.textColor = UIColor.grayColor()
         timeLabel.font = UIFont.systemFontOfSize(12)
         timeLabel.textAlignment = .Right
-        //timeLabel.backgroundColor = UIColor.greenColor()
+//        timeLabel.backgroundColor = UIColor.greenColor()
         
         cell.addSubview(timeLabel)
         
         let unreadInt = msgItem?.objectForKey("unread") as! Int
         
         if unreadInt != 0{
-            let unreadBadge = UILabel(frame: CGRect(x: cell.frame.width - 28, y: 36, width: 20, height: 20))
+            let unreadBadge = UILabel(frame: CGRect(x: view.frame.width - 28, y: 36, width: 20, height: 20))
             unreadBadge.text = "\(unreadInt)"
             unreadBadge.backgroundColor = UIColor.redColor()
             unreadBadge.textColor = UIColor.whiteColor()
@@ -268,15 +306,15 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             cell.addSubview(unreadBadge)
         }
         
-        let chatTitle = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: cell.frame.width - 100 - avatar.frame.width, height: 20))
+        let chatTitle = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: view.frame.width - 100 - avatar.frame.width, height: 20))
         chatTitle.text = msgItem?.objectForKey("chatname") as? String
         if friendComments?.objectForKey("\(fid)") != nil{
             chatTitle.text = friendComments?.objectForKey("\(fid)") as? String
         }
-        
+//        chatTitle.backgroundColor = UIColor.greenColor()
         cell.addSubview(chatTitle)
         
-        let textPV = UILabel(frame: CGRect(x: chatTitle.frame.origin.x, y: 36, width: cell.frame.width - 60 - avatar.frame.width, height: 20))
+        let textPV = UILabel(frame: CGRect(x: chatTitle.frame.origin.x, y: 36, width: view.frame.width - 60 - avatar.frame.width, height: 20))
         textPV.textColor = UIColor.grayColor()
         let msgType = msgItem?.objectForKey("type") as? String
         switch msgType! {
@@ -303,6 +341,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         }
         
         textPV.font = UIFont.systemFontOfSize(14)
+//        textPV.backgroundColor = UIColor.greenColor()
         cell.addSubview(textPV)
         
         

@@ -22,6 +22,7 @@
 		63347F7B1D45B23A00400BD5 /* UDChatFunc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */; };
 		635902C21D42237D00300A25 /* UDChatDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635902C11D42237D00300A25 /* UDChatDate.swift */; };
 		635902C41D4230C100300A25 /* UDSendStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635902C31D4230C100300A25 /* UDSendStatusView.swift */; };
+		637719AB1D4E391A007FF762 /* UDPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637719AA1D4E391A007FF762 /* UDPostViewController.swift */; };
 		63829B421D406AEB00316AE3 /* UDUserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63829B411D406AEB00316AE3 /* UDUserViewController.swift */; };
 		638769DE1D3686DE001257DC /* UDLoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638769DD1D3686DE001257DC /* UDLoginViewController.swift */; };
 		63A13A321D3F52E200DB7287 /* UDChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A13A311D3F52E200DB7287 /* UDChatViewController.swift */; };
@@ -68,6 +69,7 @@
 		63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatFunc.swift; sourceTree = "<group>"; };
 		635902C11D42237D00300A25 /* UDChatDate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatDate.swift; sourceTree = "<group>"; };
 		635902C31D4230C100300A25 /* UDSendStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDSendStatusView.swift; sourceTree = "<group>"; };
+		637719AA1D4E391A007FF762 /* UDPostViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDPostViewController.swift; sourceTree = "<group>"; };
 		63829B411D406AEB00316AE3 /* UDUserViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDUserViewController.swift; sourceTree = "<group>"; };
 		638769DD1D3686DE001257DC /* UDLoginViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDLoginViewController.swift; sourceTree = "<group>"; };
 		63A13A311D3F52E200DB7287 /* UDChatViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatViewController.swift; sourceTree = "<group>"; };
@@ -124,19 +126,20 @@
 			isa = PBXGroup;
 			children = (
 				6315CF081D27FF0000F25879 /* AppDelegate.swift */,
-				63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */,
 				6315CF0A1D27FF0000F25879 /* FirstViewController.swift */,
 				6315CF0C1D27FF0000F25879 /* SecondViewController.swift */,
 				631732191D4A4DDA0019B512 /* ThirdViewController.swift */,
+				637719AA1D4E391A007FF762 /* UDPostViewController.swift */,
 				6317321B1D4A56630019B512 /* UDSearchViewController.swift */,
 				63A13A311D3F52E200DB7287 /* UDChatViewController.swift */,
 				63829B411D406AEB00316AE3 /* UDUserViewController.swift */,
-				63182D221D2BC0F60056DF85 /* UDTextField.swift */,
 				638769DD1D3686DE001257DC /* UDLoginViewController.swift */,
 				632C621E1D3CBEF70010C27C /* UDRegViewController.swift */,
 				6315CF0E1D27FF0000F25879 /* Main.storyboard */,
+				63182D221D2BC0F60056DF85 /* UDTextField.swift */,
 				635902C11D42237D00300A25 /* UDChatDate.swift */,
 				63A13A351D3F57CB00DB7287 /* UDChatBubble.swift */,
+				63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */,
 				635902C31D4230C100300A25 /* UDSendStatusView.swift */,
 				63A13A331D3F550800DB7287 /* HexColorExtension.swift */,
 				6315CF111D27FF0000F25879 /* Assets.xcassets */,
@@ -297,6 +300,7 @@
 				632C621F1D3CBEF70010C27C /* UDRegViewController.swift in Sources */,
 				6315CF0D1D27FF0000F25879 /* SecondViewController.swift in Sources */,
 				6317321C1D4A56630019B512 /* UDSearchViewController.swift in Sources */,
+				637719AB1D4E391A007FF762 /* UDPostViewController.swift in Sources */,
 				63829B421D406AEB00316AE3 /* UDUserViewController.swift in Sources */,
 				635902C41D4230C100300A25 /* UDSendStatusView.swift in Sources */,
 				6315CF091D27FF0000F25879 /* AppDelegate.swift in Sources */,

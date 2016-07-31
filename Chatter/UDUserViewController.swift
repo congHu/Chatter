@@ -17,7 +17,7 @@ enum UDUserRelation {
 //    func pushToChatVCImd(chatVC:UDChatViewController)
 //    
 //}
-class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertViewDelegate {
+class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewControllerDelegate {
 
     var scrollView:UIScrollView!
     
@@ -86,13 +86,16 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                 if err == nil{
                     if let data = returnData{
                         let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
-                        self.friendComments = NSDictionary(dictionary: jsonObj!)
-                        self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
-                        dispatch_async(dispatch_get_main_queue(), {
-                            if self.friendComments?.objectForKey("\(self.thisUid!)") != nil{
-                                self.unameLabel.text = self.friendComments?.objectForKey("\(self.thisUid!)") as? String
-                            }
-                        })
+                        if jsonObj != nil{
+                            self.friendComments = NSDictionary(dictionary: jsonObj!)
+                            self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
+                            dispatch_async(dispatch_get_main_queue(), {
+                                if self.friendComments?.objectForKey("\(self.thisUid!)") != nil{
+                                    self.unameLabel.text = self.friendComments?.objectForKey("\(self.thisUid!)") as? String
+                                }
+                            })
+                        }
+                        
                     }
                 }
             }
@@ -199,8 +202,9 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                     if let data = returnData{
                         let json = try! NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
                         if json == nil{
+                            let returnCode = NSString(data:data, encoding: NSUTF8StringEncoding)
                             dispatch_async(dispatch_get_main_queue(), {
-                                if NSString(data:data, encoding: NSUTF8StringEncoding) == "1"{
+                                if returnCode == "1"{
                                     self.friendRelation = .Friend
                                 }
                                 var toolBarItems:[UIBarButtonItem] = []
@@ -273,18 +277,28 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         }
         
     }
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
-        if buttonIndex == 1{
-            print("add friend with \(alertView.textFieldAtIndex(0)?.text)")
-            // TODO: 发送好友请求
-        }
-    }
+//    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+//        if buttonIndex == 1{
+//            print("add friend with \(alertView.textFieldAtIndex(0)?.text)")
+//            // TODO: 发送好友请求
+//        }
+//    }
     func gotoAddFriend(){
-        let alert = UIAlertView(title: nil, message: "输入验证信息", delegate: self, cancelButtonTitle: "取消")
-        alert.addButtonWithTitle("发送")
-        alert.alertViewStyle = .PlainTextInput
-        alert.textFieldAtIndex(0)?.text = reqMsg
-        alert.show()
+//        let alert = UIAlertView(title: nil, message: "输入验证信息", delegate: self, cancelButtonTitle: "取消")
+//        alert.addButtonWithTitle("发送")
+//        alert.alertViewStyle = .PlainTextInput
+//        alert.textFieldAtIndex(0)?.text = reqMsg
+//        alert.show()
+        
+        let postVC = UDPostViewController(hint: "输入验证信息", placeholder: reqMsg, charsLimit: 30, requestURL: "http://119.29.225.280/notecloud/sendFriendReq.php")
+        postVC.delegate = self
+        navigationController?.pushViewController(postVC, animated: true)
+    }
+    func postViewControllerSetBody(content: String?) -> String? {
+        return "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)&msg=\(content!)"
+    }
+    func postViewControllerDidSucceed() {
+        navigationController?.popViewControllerAnimated(true)
     }
     func moreMenu(){
         switch friendRelation {
