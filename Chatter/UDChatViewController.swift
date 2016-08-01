@@ -392,7 +392,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                 //MARK: POST消息
                 let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/sendMsg.php")!)
                 resq.HTTPMethod = "POST"
-                resq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisChatID)&msgtype=string&body=\(thisMsgBody)").dataUsingEncoding(NSUTF8StringEncoding)
+                resq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisChatID)&body=\(thisMsgBody)").dataUsingEncoding(NSUTF8StringEncoding)
 //                $uid = $_POST["uid"];
 //                $acode = $_POST["acode"];
 //                $toid = $_POST["toid"];

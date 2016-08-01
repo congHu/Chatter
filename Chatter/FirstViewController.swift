@@ -56,7 +56,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         //头像文件夹
         _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/avatar", withIntermediateDirectories: true, attributes: nil)
-        
+        //封面文件夹
+        _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/bg_img", withIntermediateDirectories: true, attributes: nil)
         
         
         navBar.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(FirstViewController.gotoSearch))

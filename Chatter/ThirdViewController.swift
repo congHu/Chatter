@@ -69,13 +69,16 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 }
             })
             
-            let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(uid!)")!)
+            let infoResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getPrivateInfo.php")!)
+            infoResq.HTTPMethod = "POST"
+            infoResq.HTTPBody = NSString(string: "uid=\(uid!)&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
             NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
                 if err == nil{
                     if let data = returnData{
                         let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                         if json != nil{
                             if json!.objectForKey("error") == nil{
+                                
                                 self.infos = NSDictionary(dictionary: json!)
                                 //print(self.infos)
                                 dispatch_async(dispatch_get_main_queue(), { 
@@ -134,10 +137,17 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 subLabel.text = infos?.objectForKey("area") as? String
                 break
             case 2:
-                subLabel.text = infos?.objectForKey("gender") as? String
+                let gender = infos?.objectForKey("gender") as? String
+                if gender != nil{
+                    if gender == "0"{
+                        subLabel.text = "男"
+                    }else if gender == "1"{
+                        subLabel.text = "女"
+                    }
+                }
                 break
             case 3:
-                // TODO: 获取完整生日
+                subLabel.text = infos?.objectForKey("birthday") as? String
                 break
             default:
                 break

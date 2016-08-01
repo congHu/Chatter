@@ -14,19 +14,32 @@ import UIKit
 }
 class UDPostViewController: UIViewController, UITextViewDelegate {
 
+    private var scrollView:UIScrollView!
     private var textView:UITextView!
     private var textViewBG:UIView!
     private var hintLabel:UILabel?
-    var navigationTitle:String?
+
+    var navigationTitle:String?{
+        get{
+            return navigationItem.title
+        }
+        set(val){
+            navigationItem.title = val
+        }
+    }
     var hint:String?
     var placeholder:String?
     var request:String!
+    
     private var claarBtn:UIButton!
     private var charsIndicator:UILabel?
+    
     var charsLimit:Int?
     var method:String = "POST"
     var HTTPBody:String?
+    
     var delegate:UDPostViewControllerDelegate?
+    
     convenience init(hint:String?, placeholder:String?, charsLimit:Int?, requestURL:String!){
         self.init()
         self.hint = hint
@@ -36,19 +49,24 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
     }
     override func viewDidLoad() {
         super.viewDidLoad()
-        // TODO: 外观混乱，Textview文字地方不对，hintLabel也见不到，灰色需要再浅一些，加上scrollView的拖拽隐藏键盘，而且一加载textView马上获得焦点
-        view.backgroundColor = UIColor.lightGrayColor()
-        textView = UITextView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 100))
-        textViewBG = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 116))
+        scrollView = UIScrollView(frame: view.frame)
+        scrollView.backgroundColor = UIColor(hex: "dddddd")
+        view.addSubview(scrollView)
+        scrollView.alwaysBounceVertical = true
+        scrollView.keyboardDismissMode = .OnDrag
+        textView = UITextView(frame: CGRect(x: 16, y: 0, width: view.frame.width - 32, height: 100))
+        textViewBG = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 124))
         textViewBG.backgroundColor = UIColor.whiteColor()
-        view.addSubview(textViewBG)
+        scrollView.addSubview(textViewBG)
         textViewBG.addSubview(textView)
         if hint != nil{
             let size = NSString(string: hint!).boundingRectWithSize(CGSize(width: view.frame.width, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: UIFont.systemFontOfSize(14)], context: nil)
-            hintLabel = UILabel(frame: CGRect(x: 0, y: 8, width: view.frame.width, height: size.height))
+            hintLabel = UILabel(frame: CGRect(x: 16, y: 8, width: view.frame.width, height: size.height + 8))
             hintLabel?.font = UIFont.systemFontOfSize(14)
-            view.addSubview(hintLabel!)
-            textViewBG.frame = CGRect(x: 0, y: size.height + 16, width: view.frame.width, height: 100)
+            hintLabel?.text = hint
+            hintLabel?.textColor = UIColor.grayColor()
+            scrollView.addSubview(hintLabel!)
+            textViewBG.frame = CGRect(x: 0, y: size.height + 24, width: view.frame.width, height: 124)
         }
         if placeholder != nil{
             textView.text = placeholder
@@ -62,12 +80,13 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
         if charsLimit != nil{
             charsIndicator = UILabel(frame: CGRect(x: claarBtn.frame.origin.x - 48, y: claarBtn.frame.origin.y, width: 40, height: 16))
             charsIndicator?.textColor = UIColor.grayColor()
-            charsIndicator?.text = "\(charsLimit!)"
+            charsIndicator?.text = "\(charsLimit! - textView.text.characters.count)"
             textViewBG.addSubview(charsIndicator!)
         }
         textView.delegate = self
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "发送", style: .Plain, target: self, action: #selector(UDPostViewController.sendRequest))
+        textView.becomeFirstResponder()
         
     }
     func clearText(){
@@ -105,10 +124,10 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
             charsIndicator?.text = "\(charsLimit! - textView.text.characters.count)"
         }
     }
-
+    
     func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
         if charsLimit != nil{
-            if textView.text.characters.count >= charsLimit{
+            if textView.text.characters.count + text.characters.count >= charsLimit{
                 return false
             }
         }

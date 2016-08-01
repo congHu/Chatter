@@ -184,6 +184,12 @@ class UDRegViewController: UIViewController {
             return false
         }
         
+        if passwordTextField.text?.characters.count > 20{
+            setErrorMsg("密码长度太长")
+            passwordTextField.becomeFirstResponder()
+            return false
+        }
+        
         if passwordTextField.text != passwordConfirmTextField.text{
             setErrorMsg("两次密码不一致")
             passwordConfirmTextField.becomeFirstResponder()
