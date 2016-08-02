@@ -85,7 +85,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 msg = NSMutableArray()
                 msg?.writeToFile("\(caches)/msg.plist", atomically: true)
             }
-            
+            //未读
             numOfUnread = 0
             for item in msg!{
                 let msgItem = item as! NSDictionary
@@ -93,10 +93,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 numOfUnread += unread
             }
             if self.numOfUnread != 0{
-                self.navBar.title = "消息(\(self.numOfUnread))"
                 self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
             }else{
-                self.navBar.title = "消息"
                 self.tabBarController?.tabBar.items?.first!.badgeValue = nil
             }
             
@@ -195,7 +193,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                     }
                                     if requireMarker{
                                         let timeMarker = NSMutableDictionary()
-                                        timeMarker.setValue("system", forKey: "send_from")
+                                        timeMarker.setValue("timeMark", forKey: "send_from")
                                         timeMarker.setValue("0", forKey: "fromid")
                                         timeMarker.setValue("string", forKey: "type")
                                         timeMarker.setValue(UDChatDate.longTime(msgTime)!, forKey: "body")

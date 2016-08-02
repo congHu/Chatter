@@ -298,7 +298,7 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         return cell
     }
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        // TODO: 点击进入用户详情
+        // MARK: 点击进入用户详情
         if indexPath.section == 0{
             let searchVC = UDSearchViewController()
             searchVC.myUID = uid

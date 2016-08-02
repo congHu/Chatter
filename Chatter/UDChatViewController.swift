@@ -31,7 +31,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     private var buttomChangeHeight:CGFloat = 0
     
     private var tableOffsetYOrigin:CGFloat!
-    private var isKeyboardShowed = false
+//    private var isKeyboardShowed = false
     private var isScrollToButtom = true
     //private var keyboardAnimating = false
     
@@ -84,6 +84,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             buttomBar.addSubview(addFriendComfirm!)
             addFriendComfirm?.setTitle("添加为好友", forState: .Normal)
             blackListOption = UIButton(frame: moreType.frame)
+            // TODO: 黑名单按钮的图片
             blackListOption?.setImage(UIImage(named: "more"), forState: .Normal)
             buttomBar.addSubview(blackListOption!)
             
@@ -132,13 +133,13 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     }
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
-        if tableView.contentSize.height > tableView.frame.height{
+        if tableView.contentSize.height > tableView.frame.height - 40{
             tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: false)
         }
     }
     func gotoSetting(){
 //        let userVC = UDUserViewController()
-//        // TODO: 传入uid
+//        // TODO: setting
 //        userVC.uid = "4"
 //        hidesBottomBarWhenPushed = true
 //        navigationController?.pushViewController(userVC, animated: true)
@@ -229,7 +230,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
         }
         buttomStartedY = buttomBar.frame.origin.y + buttomChangeHeight
-        isKeyboardShowed = true
+//        isKeyboardShowed = true
     }
     
     func keyboardWillUnShow(noti:NSNotification){
@@ -244,15 +245,15 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             }) { (finished) in
                 //self.keyboardAnimating = false
         }
-        isKeyboardShowed = false
+//        isKeyboardShowed = false
     }
     
     func textViewDidChange(textView: UITextView) {
-        // MARK: 没有虚拟键盘的情况
-        if !isKeyboardShowed{
-            buttomStartedY = view.frame.height - 40
-            tableOffsetYOrigin = tableView.contentOffset.y
-        }
+//        // MARK: 没有虚拟键盘的情况
+//        if !isKeyboardShowed{
+//            buttomStartedY = view.frame.height - 40
+//            tableOffsetYOrigin = tableView.contentOffset.y
+//        }
         // MARK: 根据文字调整高度
         if buttomOriginHeight != inputTextView.contentSize.height{
             if inputTextView.contentSize.height <= 24 {
@@ -485,7 +486,6 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         msgToSend.setValue("user", forKey: "send_from")
         msgToSend.setValue("\(myUID!)", forKey: "fromid")
         
-        // TODO: 需要支持更多的type
         msgToSend.setValue("string", forKey: "type")
         
         msgToSend.setValue("我们已经成为好友啦，可以愉快地开始聊天啦!", forKey: "body")
@@ -537,7 +537,6 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                     print(NSString(data: data, encoding: NSUTF8StringEncoding)!)
                     let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                     if json?.objectForKey("error") == nil{
-                        // TODO: 添加时间marker，添加己方消息，更新主页消息显示，消息发送到对方
                         sendSuccess = true
                     }
                     

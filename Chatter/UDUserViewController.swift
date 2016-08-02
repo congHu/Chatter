@@ -17,7 +17,7 @@ enum UDUserRelation {
 //    func pushToChatVCImd(chatVC:UDChatViewController)
 //    
 //}
-class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewControllerDelegate {
+class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewControllerDelegate, UITableViewDelegate, UITableViewDataSource {
 
     var scrollView:UIScrollView!
     
@@ -35,11 +35,13 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
     var unameLabel:UILabel!
     
     // TODO: 修改备注按钮
-    var setFriendCommentBtn:UIButton!
+//    var setFriendCommentBtn:UIButton!
     
     var subLabel:UILabel?
     
     var infoTableView:UITableView!
+    var infosInTable:NSMutableDictionary?
+    
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     
     var friendComments:NSDictionary?
@@ -64,16 +66,23 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
         scrollView.addSubview(bgImgView)
         bgImgView.backgroundColor = UIColor.lightGrayColor()
         
+        if NSFileManager.defaultManager().fileExistsAtPath("\(self.caches)/bg_img/user\(self.thisUid!).jpg"){
+            bgImgView.setImage(UIImage(contentsOfFile: "\(self.caches)/bg_img/user\(self.thisUid!).jpg"), forState: .Normal)
+        }
+        
         let bgResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getBGImg.php?uid=\(thisUid!)")!)
         NSURLConnection.sendAsynchronousRequest(bgResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
             if err == nil{
                 if let data = returnData{
                     let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
                     if json == nil{
-                        dispatch_async(dispatch_get_main_queue(), {
-                            self.bgImgView.setImage(UIImage(data: data), forState: .Normal)
-                            data.writeToFile("\(self.caches)/bg_img/\(self.thisUid!).jpg", atomically: true)
-                        })
+                        if data.length != 0{
+                            dispatch_async(dispatch_get_main_queue(), {
+                                self.bgImgView.setImage(UIImage(data: data), forState: .Normal)
+                                data.writeToFile("\(self.caches)/bg_img/user\(self.thisUid!).jpg", atomically: true)
+                            })
+                        }
+                        
                         
                         
                     }
@@ -110,7 +119,14 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
                             self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
                             dispatch_async(dispatch_get_main_queue(), {
                                 if self.friendComments?.objectForKey("\(self.thisUid!)") != nil{
-                                    self.unameLabel.text = self.friendComments?.objectForKey("\(self.thisUid!)") as? String
+                                    let showText = self.friendComments?.objectForKey("\(self.thisUid!)") as? String
+                                    self.unameLabel.text = showText
+//                                    if showText != nil{
+//                                        let size = NSString(string: showText!).boundingRectWithSize(CGSize(width: self.unameLabel.frame.width, height: self.unameLabel.frame.height), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: self.unameLabel.font], context: nil)
+//                                        self.setFriendCommentBtn = UIButton(frame: CGRect(x: self.unameLabel.frame.origin.x + size.width + 8, y: self.unameLabel.frame.origin.y, width: 16, height: 16))
+//                                        self.setFriendCommentBtn.setImage(UIImage(named: "edit"), forState: .Normal)
+//                                        self.scrollView.addSubview(self.setFriendCommentBtn)
+//                                    }
                                 }
                             })
                         }
@@ -130,7 +146,15 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
         unameLabel.layer.shadowOffset = CGSize(width: 2, height: 2)
         unameLabel.text = ""
         if friendComments?.objectForKey("\(thisUid!)") != nil{
-            unameLabel.text = friendComments?.objectForKey("\(thisUid!)") as? String
+            let showText = friendComments?.objectForKey("\(thisUid!)") as? String
+            unameLabel.text = showText
+//            if showText != nil{
+//                let size = NSString(string: showText!).boundingRectWithSize(CGSize(width: unameLabel.frame.width, height: unameLabel.frame.height), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: unameLabel.font], context: nil)
+//                setFriendCommentBtn = UIButton(frame: CGRect(x: unameLabel.frame.origin.x + size.width + 8, y: unameLabel.frame.origin.y, width: 16, height: 16))
+//                setFriendCommentBtn.setImage(UIImage(named: "edit"), forState: .Normal)
+//                scrollView.addSubview(setFriendCommentBtn)
+//            }
+            
         }
         
         
@@ -139,6 +163,13 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
         subLabel?.font = UIFont.systemFontOfSize(12)
         scrollView.addSubview(subLabel!)
         subLabel?.text = ""
+        
+        infoTableView = UITableView(frame: CGRect(x: 0, y: avatar.frame.origin.y + avatar.frame.height + 16, width: view.frame.width, height: 88))
+        infoTableView.alpha = 0
+        scrollView.addSubview(infoTableView)
+        infoTableView.allowsSelection = false
+        infoTableView.delegate = self
+        infoTableView.dataSource = self
         
         let avatarResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getAvatar.php?uid=\(thisUid!)&type=user")!)
         NSURLConnection.sendAsynchronousRequest(avatarResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
@@ -158,7 +189,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
             }
         })
         
-        // TODO: 获取用户信息, 生日、个性签名未处理(整个scrollView改成tableview)
+        // TODO: 个性签名高度根据文字调整
         let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(thisUid!)")!)
         NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
             if err == nil{
@@ -169,7 +200,14 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
                             dispatch_async(dispatch_get_main_queue(), {
                                 self.navigationItem.title = json?.objectForKey("uname") as? String
                                 if self.unameLabel.text == ""{
-                                    self.unameLabel.text = json?.objectForKey("uname") as? String
+                                    let showText = json?.objectForKey("uname") as? String
+                                    self.unameLabel.text = showText
+//                                    if showText != nil{
+//                                        let size = NSString(string: showText!).boundingRectWithSize(CGSize(width: self.unameLabel.frame.width, height: self.unameLabel.frame.height), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: self.unameLabel.font], context: nil)
+//                                        self.setFriendCommentBtn = UIButton(frame: CGRect(x: self.unameLabel.frame.origin.x + size.width + 8, y: self.unameLabel.frame.origin.y, width: 16, height: 16))
+//                                        self.setFriendCommentBtn.setImage(UIImage(named: "edit"), forState: .Normal)
+//                                        self.scrollView.addSubview(self.setFriendCommentBtn)
+//                                    }
                                 }
                                 var subTitle = ""
                                 if (json?.objectForKey("area") as? String) != nil{
@@ -193,6 +231,31 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
                                 }
                                 
                                 self.subLabel?.text = subTitle
+                                
+                                var infoTableHeight:CGFloat = 0
+                                if json?.objectForKey("birthday") != nil{
+                                    if ((json?.objectForKey("birthday") as? String) != nil){
+                                        if self.infosInTable == nil{
+                                            self.infosInTable = NSMutableDictionary()
+                                        }
+                                        self.infosInTable?.setValue(json?.objectForKey("birthday") as? String, forKey: "birthday")
+                                        self.infoTableView.alpha = 1
+                                        infoTableHeight += 44
+                                    }
+                                }
+                                if json?.objectForKey("description") != nil{
+                                    if ((json?.objectForKey("description") as? String) != nil){
+                                        if self.infosInTable == nil{
+                                            self.infosInTable = NSMutableDictionary()
+                                        }
+                                        self.infosInTable?.setValue(json?.objectForKey("description") as? String, forKey: "description")
+                                        self.infoTableView.alpha = 1
+                                        infoTableHeight += 44
+                                    }
+                                }
+                                self.infoTableView.frame = CGRect(x: 0, y: self.infoTableView.frame.origin.y, width: self.view.frame.width, height: infoTableHeight)
+                                self.infoTableView.reloadData()
+                                
                                 
                             })
                         }
@@ -272,9 +335,52 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
             })
             
         }else{
-            reqMsg = "我是\(NSUserDefaults.standardUserDefaults().objectForKey("reqMsg") as! String)"
+            reqMsg = "\(NSUserDefaults.standardUserDefaults().objectForKey("reqMsg") as! String)"
         }
         
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if infosInTable != nil{
+            return (infosInTable?.count)!
+        }
+        return 0
+    }
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: .Default, reuseIdentifier: "info")
+        if infosInTable != nil{
+            switch indexPath.row {
+            case 0:
+                if infosInTable?.objectForKey("birthday") != nil{
+                    cell.textLabel?.text = "生日"
+                    let subLabel = UILabel(frame: CGRect(x: view.frame.width - 116, y: 8, width: 100, height: 28))
+                    subLabel.font = UIFont.systemFontOfSize(14)
+                    subLabel.textColor = UIColor.grayColor()
+                    subLabel.textAlignment = .Right
+                    //            subLabel.backgroundColor = UIColor.greenColor()
+                    cell.addSubview(subLabel)
+                    subLabel.text = infosInTable?.objectForKey("birthday") as? String
+                }
+                
+                break
+            case 1:
+                if infosInTable?.objectForKey("description") != nil{
+                    cell.textLabel?.text = "个性签名"
+                    let subLabel = UILabel(frame: CGRect(x: view.frame.width - 132, y: 8, width: 100, height: 28))
+                    subLabel.font = UIFont.systemFontOfSize(14)
+                    subLabel.textColor = UIColor.grayColor()
+                    subLabel.textAlignment = .Right
+                    //            subLabel.backgroundColor = UIColor.greenColor()
+                    cell.addSubview(subLabel)
+                    subLabel.text = infosInTable?.objectForKey("description") as? String
+                }
+                break
+            default:
+                break
+            }
+        }
+        
+        return cell
     }
 
     func gotoChat(){
@@ -301,7 +407,6 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
 //    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
 //        if buttonIndex == 1{
 //            print("add friend with \(alertView.textFieldAtIndex(0)?.text)")
-//            // TODO: 发送好友请求
 //        }
 //    }
     func gotoAddFriend(){
@@ -316,18 +421,46 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
         postVC.navigationTitle = "添加好友"
         navigationController?.pushViewController(postVC, animated: true)
     }
-    func postViewControllerSetBody(content: String?) -> String? {
-        return "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)&msg=\(content!)"
+    func postViewControllerSetBody(postVC: UDPostViewController, content: String?) -> String? {
+        switch postVC.request {
+        case "http://119.29.225.180/notecloud/sendFriendReq.php":
+            return "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)&msg=\(content!)"
+        case "http://119.29.225.180/notecloud/setFriendComment.php":
+            return "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)&comment=\(content!)"
+        default:
+            return nil
+        }
+        
     }
-    func postViewControllerDidSucceed() {
+    func postViewControllerDidSucceed(postVC: UDPostViewController, content: String?) {
         navigationController?.popViewControllerAnimated(true)
+        switch postVC.request {
+        case "http://119.29.225.280/notecloud/sendFriendReq.php":
+            UIAlertView(title: "请求发送成功", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+            break
+        case "http://119.29.225.180/notecloud/setFriendComment.php":
+            friendComments?.setValue(content!, forKey: "\(thisUid!)")
+            friendComments?.writeToFile("\(caches)/friend_comments.plist", atomically: true)
+            break
+        default:
+            break
+        }
+    }
+    func postViewControllerDidFailed(postVC: UDPostViewController, content: String?) {
+        UIAlertView(title: "发送失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
     }
     func moreMenu(){
         switch friendRelation {
         case .Myself:
             break
         case .Friend:
-            UIActionSheet(title: nil, delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "删除好友").showInView(view)
+            let asf = UIActionSheet(title: nil, delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
+            asf.addButtonWithTitle("修改备注")
+            asf.addButtonWithTitle("删除好友")
+            asf.addButtonWithTitle("取消")
+            asf.cancelButtonIndex = asf.numberOfButtons - 1
+            asf.destructiveButtonIndex = asf.numberOfButtons - 2
+            asf.showInView(view)
             break
         case .Stranger:
             UIActionSheet(title: nil, delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "添加至黑名单").showInView(view)
@@ -339,20 +472,72 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
         
     }
     func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
-        if buttonIndex == 0{
-            switch friendRelation {
-            case .Myself:
+        switch friendRelation {
+        case .Myself:
+            break
+        case .Friend:
+            switch buttonIndex {
+            case 0:
+                let postVC = UDPostViewController(hint: "输入备注名称", placeholder: unameLabel.text, charsLimit: 10, requestURL: "http://119.29.225.180/notecloud/setFriendComment.php")
+                postVC.delegate = self
+                postVC.navigationTitle = "修改备注"
+                navigationController?.pushViewController(postVC, animated: true)
                 break
-            case .Friend:
+            case 1:
                 print("删除")
+                let deleteResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/deleteFriend.php")!)
+                deleteResq.HTTPMethod = "POST"
+                deleteResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
+                NSURLConnection.sendAsynchronousRequest(deleteResq, queue: NSOperationQueue(), completionHandler: { (resp:
+                    NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    if err == nil{
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if json != nil{
+                                if json?.objectForKey("error") == nil{
+                                    
+                                    let homePageMsg = NSMutableArray(contentsOfFile: "\(self.caches)/msg.plist")
+                                    var index = 0
+                                    for item in homePageMsg!{
+                                        let msgItem = item as! NSDictionary
+                                        if msgItem.objectForKey("send_from") as! String == "user" && msgItem.objectForKey("fromid") as! String == "\(self.thisUid!)"{
+                                            homePageMsg?.removeObjectAtIndex(index)
+                                            homePageMsg?.writeToFile("\(self.caches)/msg.plist", atomically: true)
+                                            break
+                                        }
+                                        index += 1
+                                    }
+                                    
+                                    self.friendRelation = .Stranger
+                                    
+                                    dispatch_async(dispatch_get_main_queue(), {
+                                        UIAlertView(title: "操作成功", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+                                        
+                                        var toolBarItems:[UIBarButtonItem] = []
+                                        toolBarItems.append(UIBarButtonItem(image: UIImage(named: "addFriend"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
+                                        //                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: self, action: nil))
+                                        toolBarItems.append(UIBarButtonItem(image: UIImage(named: "more"), style: .Plain, target: self, action: #selector(UDUserViewController.moreMenu)))
+                                        
+                                        self.rightToolBar.setItems(toolBarItems, animated: true)
+                                        self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: self.rightToolBar)
+                                        
+                                    })
+                                }
+                            }
+                        }
+                    }
+                })
                 break
-            case .Stranger:
-                print("黑名单")
-                break
-            case .BlackList:
-                print("移除黑名单")
+            default:
                 break
             }
+            break
+        case .Stranger:
+            print("黑名单")
+            break
+        case .BlackList:
+            print("移除黑名单")
+            break
         }
         
     }
@@ -374,3 +559,4 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
     */
 
 }
+

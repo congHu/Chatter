@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     var tableView:UITableView!
     var titles:[String] = ["名字","地区","性别","生日","个性签名","隐私"]
@@ -16,6 +16,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
     var active:String?
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var avatar:UIImageView!
+    var bgImgView:UIImageView!
     var infos:NSDictionary?
     
     override func viewDidLoad() {
@@ -61,6 +62,30 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                 self.avatar.image = UIImage(data: data)
                                 data.writeToFile("\(self.caches)/avatar/user\(self.uid!).jpg", atomically: true)
                             })
+                            
+                            
+                        }
+                        
+                    }
+                }
+            })
+            
+            
+            
+            
+            let bgResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getBGImg.php?uid=\(uid!)")!)
+            NSURLConnection.sendAsynchronousRequest(bgResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
+                        if json == nil{
+                            if data.length != 0{
+                                dispatch_async(dispatch_get_main_queue(), {
+                                    self.bgImgView.image = UIImage(data: data)
+                                    data.writeToFile("\(self.caches)/bg_img/\(self.uid!).jpg", atomically: true)
+                                })
+                            }
+                            
                             
                             
                         }
@@ -119,6 +144,13 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         case 1:
             cell.textLabel?.text = "封面图"
             cell.accessoryType = .DisclosureIndicator
+            bgImgView = UIImageView(frame: CGRect(x: view.frame.width - 80, y: 8, width: 48, height: 48))
+            bgImgView.backgroundColor = UIColor.grayColor()
+            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/bg_img/user\(uid!).jpg"){
+                bgImgView.image = UIImage(contentsOfFile: "\(caches)/bg_img/user\(uid!).jpg")
+            }
+            
+            cell.addSubview(bgImgView)
             break
         case 2:
             cell.textLabel?.text = titles[indexPath.row]
@@ -193,13 +225,234 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         }
     }
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        print(indexPath.row)
+        switch indexPath.section {
+        case 0:
+            let as1 = UIActionSheet(title: "修改头像", delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
+            as1.tag = 1
+            as1.addButtonWithTitle("拍照")
+            as1.addButtonWithTitle("选择照片")
+            as1.addButtonWithTitle("取消")
+            as1.cancelButtonIndex = as1.numberOfButtons - 1
+            as1.showInView(view)
+            tableView.deselectRowAtIndexPath(indexPath, animated: true)
+            break
+        case 1:
+            let as2 = UIActionSheet(title: "修改封面图", delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
+            as2.tag = 2
+            as2.addButtonWithTitle("拍照")
+            as2.addButtonWithTitle("选择照片")
+            as2.addButtonWithTitle("取消")
+            as2.cancelButtonIndex = as2.numberOfButtons - 1
+            as2.showInView(view)
+            tableView.deselectRowAtIndexPath(indexPath, animated: true)
+            break
+        case 3:
+            break
+        default:
+            break
+        }
+    }
+    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+        switch actionSheet.tag {
+        case 1:
+            
+            switch buttonIndex {
+            case 0:
+                
+                let picker = UIImagePickerController()
+                picker.delegate = self
+                picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
+                picker.allowsEditing = true
+                picker.view.tag = 1
+                if UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Rear) || UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Front){
+                    //picker.cameraCaptureMode = UIImagePickerControllerCameraCaptureMode.Photo
+                    
+                    picker.sourceType = UIImagePickerControllerSourceType.Camera
+                    
+                }else{
+                    print("Camera Unavaliable")
+                }
+                presentViewController(picker, animated: true, completion: nil)
+                
+                break
+            case 1:
+                let picker = UIImagePickerController()
+                picker.delegate = self
+                picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
+                picker.allowsEditing = true
+                picker.sourceType = UIImagePickerControllerSourceType.PhotoLibrary
+                picker.view.tag = 1
+                presentViewController(picker, animated: true, completion: nil)
+                break
+            default:
+                break
+            }
+            break
+        case 2:
+            switch buttonIndex {
+            case 0:
+                let picker = UIImagePickerController()
+                picker.delegate = self
+                picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
+                picker.allowsEditing = true
+                picker.view.tag = 2
+                if UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Rear) || UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Front){
+                    //picker.cameraCaptureMode = UIImagePickerControllerCameraCaptureMode.Photo
+                    
+                    picker.sourceType = UIImagePickerControllerSourceType.Camera
+                    
+                }else{
+                    print("Camera Unavaliable")
+                }
+                presentViewController(picker, animated: true, completion: nil)
+                break
+            case 1:
+                let picker = UIImagePickerController()
+                picker.delegate = self
+                picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
+                picker.allowsEditing = true
+                picker.sourceType = UIImagePickerControllerSourceType.PhotoLibrary
+                picker.view.tag = 2
+                presentViewController(picker, animated: true, completion: nil)
+                break
+            default:
+                break
+            }
+            break
+        default:
+            break
+        }
     }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
+    func resizeImg(img:UIImage, _ width:CGFloat) ->UIImage{
+        let newsize = CGSize(width: width, height: (width/img.size.width)*img.size.height)
+        UIGraphicsBeginImageContext(newsize)
+        img.drawInRect(CGRectMake(0, 0, newsize.width, newsize.height))
+        let newimg = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return newimg
+    }
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
+        dismissViewControllerAnimated(true, completion: { () -> Void in
+            if picker.view.tag == 1{
+                print("头像")
+                let img = self.resizeImg(image, 128)
+                let imgData = UIImageJPEGRepresentation(img, 0.5)
+                
+                let filename = "user\(self.uid!).jpg"
+                let path = "\(self.caches)/avatar/\(filename)"
+                
+                let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/setAvatar.php")!)
+                resq.HTTPMethod = "POST"
+                let postData = NSMutableData()
+                /*
+                 POST /notecloud/setAvatar.php HTTP/1.1
+                 Host: 119.29.225.180
+                 Cache-Control: no-cache
+                 Postman-Token: 18a2dca6-4899-93a5-b531-741176b24389
+                 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+                 
+                 ------WebKitFormBoundary7MA4YWxkTrZu0gW \r\n
+                 Content-Disposition: form-data; name="uid" \r\n
+                 \r\n
+                 6 \r\n
+                 ------WebKitFormBoundary7MA4YWxkTrZu0gW \r\n
+                 Content-Disposition: form-data; name="acode" \r\n
+                 \r\n
+                 7MEZ2hJkIOGL3aZj \r\n
+                 ------WebKitFormBoundary7MA4YWxkTrZu0gW \r\n
+                 Content-Disposition: form-data; name="file"; filename="file.jpg" \r\n
+                 Content-Type: image/jpeg \r\n
+                 \r\n
+                 <...> \r\n
+                 ------WebKitFormBoundary7MA4YWxkTrZu0gW-- \r\n
+                */
+                
+                resq.setValue("multipart/form-data; boundary=AaB03x", forHTTPHeaderField: "Content-Type")
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"uid\";\r\n\r\n\(self.uid!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"acode\";\r\n\r\n\(self.active!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(imgData!)
+                postData.appendData(NSString(string: "\r\n--AaB03x--\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                resq.setValue(String(postData.length), forHTTPHeaderField: "Content-Length")
+                resq.HTTPBody = postData
+                
+                
+                NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
+                    var sendSuccess = false
+                    if err == nil{
+                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if json?.objectForKey("error") == nil{
+                                sendSuccess = true
+                                dispatch_async(dispatch_get_main_queue(), { 
+                                    imgData?.writeToFile(path, atomically: true)
+                                    self.avatar.image = img
+                                })
+                            }
+                        }
+                        
+                    }
+                    if !sendSuccess{
+                        dispatch_async(dispatch_get_main_queue(), {
+                            UIAlertView(title: "上传失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+                        })
+                        
+                    }
+                }
+            }else if picker.view.tag == 2{
+                print("封面图")
+                let img = self.resizeImg(image, 480)
+                let imgData = UIImageJPEGRepresentation(img, 0.5)
+                
+                let filename = "user\(self.uid!).jpg"
+                let path = "\(self.caches)/bg_img/\(filename)"
+                
+                let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/setBGImg.php")!)
+                resq.HTTPMethod = "POST"
+                let postData = NSMutableData()
+                
+                resq.setValue("multipart/form-data; boundary=AaB03x", forHTTPHeaderField: "Content-Type")
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"uid\";\r\n\r\n\(self.uid!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"acode\";\r\n\r\n\(self.active!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(imgData!)
+                postData.appendData(NSString(string: "\r\n--AaB03x--\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                resq.setValue(String(postData.length), forHTTPHeaderField: "Content-Length")
+                resq.HTTPBody = postData
+                
+                
+                NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
+                    var sendSuccess = false
+                    if err == nil{
+                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if json?.objectForKey("error") == nil{
+                                sendSuccess = true
+                                dispatch_async(dispatch_get_main_queue(), {
+                                    imgData?.writeToFile(path, atomically: true)
+                                    self.bgImgView.image = img
+                                })
+                            }
+                        }
+                        
+                    }
+                    if !sendSuccess{
+                        dispatch_async(dispatch_get_main_queue(), {
+                            UIAlertView(title: "上传失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+                        })
+                        
+                    }
+                }
+            }
+            
+        })
+    }
 
     /*
     // MARK: - Navigation

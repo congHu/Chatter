@@ -8,9 +8,9 @@
 
 import UIKit
 @objc protocol UDPostViewControllerDelegate {
-    optional func postViewControllerDidSucceed()
-    optional func postViewControllerDidFailed()
-    optional func postViewControllerSetBody(content: String?) -> String?
+    optional func postViewControllerDidSucceed(postVC: UDPostViewController, content: String?)
+    optional func postViewControllerDidFailed(postVC: UDPostViewController, content: String?)
+    optional func postViewControllerSetBody(postVC: UDPostViewController, content: String?) -> String?
 }
 class UDPostViewController: UIViewController, UITextViewDelegate {
 
@@ -95,7 +95,8 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
     func sendRequest(){
         let resq = NSMutableURLRequest(URL: NSURL(string: request)!)
         resq.HTTPMethod = method
-        HTTPBody = self.delegate?.postViewControllerSetBody!(textView.text)
+        HTTPBody = self.delegate?.postViewControllerSetBody?(self, content: textView.text)
+        
         if HTTPBody != nil{
             resq.HTTPBody = NSString(string: HTTPBody!).dataUsingEncoding(NSUTF8StringEncoding)
         }
@@ -104,6 +105,7 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
             var sendSuccess = false
             if err == nil{
                 if let data = returnData{
+                    print(NSString(data: data, encoding: NSUTF8StringEncoding))
                     let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                     if json != nil{
                         if json?.objectForKey("error") == nil{
@@ -113,9 +115,15 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
                 }
             }
             if sendSuccess{
-                self.delegate?.postViewControllerDidSucceed!()
+                dispatch_async(dispatch_get_main_queue(), { 
+                    self.delegate?.postViewControllerDidSucceed?(self, content: self.textView.text)
+                })
+                
             }else{
-                self.delegate?.postViewControllerDidFailed!()
+                dispatch_async(dispatch_get_main_queue(), {
+                    self.delegate?.postViewControllerDidFailed?(self, content: self.textView.text)
+                })
+                
             }
         }
     }
