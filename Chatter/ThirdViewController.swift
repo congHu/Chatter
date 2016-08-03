@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UDPostViewControllerDelegate {
 
     var tableView:UITableView!
     var titles:[String] = ["名字","地区","性别","生日","个性签名","隐私"]
@@ -105,8 +105,8 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                             if json!.objectForKey("error") == nil{
                                 
                                 self.infos = NSDictionary(dictionary: json!)
-                                //print(self.infos)
-                                dispatch_async(dispatch_get_main_queue(), { 
+                                print(self.infos)
+                                dispatch_async(dispatch_get_main_queue(), {
                                     self.tableView.reloadData()
                                 })
                                 
@@ -246,11 +246,66 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
             as2.showInView(view)
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
             break
-        case 3:
+        case 2:
+            //   0     1     2      3       4       5
+            //["名字","地区","性别","生日","个性签名","隐私"]
+            let setAttrUrl = "http://119.29.225.180/notecloud/setAttr.php"
+            switch indexPath.row {
+            case 0:
+                let unamePost = UDPostViewController(hint: "输入用户名", placeholder: infos?.objectForKey("uname") as? String, charsLimit: 10, requestURL: setAttrUrl)
+                unamePost.delegate = self
+                unamePost.navigationTitle = "用户名"
+                unamePost.navSendButtonTitle = "设置"
+                hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(unamePost, animated: true)
+                break
+            case 1:
+                break
+            case 2:
+                let genderPost = GenderViewController()
+                genderPost.currentGender = infos?.objectForKey("gender") as? String
+                genderPost.uidAndAcode = "uid=\(uid!)&acode=\(active!)"
+                hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(genderPost, animated: true)
+                break
+            case 3:
+                let birthdayPost = BirthdayViewController()
+                birthdayPost.birthday = infos?.objectForKey("birthday") as? String
+                birthdayPost.uidAndAcode = "uid=\(uid!)&acode=\(active!)"
+                hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(birthdayPost, animated: true)
+                break
+            case 4:
+                let descPost = UDPostViewController(hint: "输入个性签名", placeholder: infos?.objectForKey("description") as? String, charsLimit: 70, requestURL: setAttrUrl)
+                descPost.delegate = self
+                descPost.navigationTitle = "个性签名"
+                descPost.navSendButtonTitle = "设置"
+                hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(descPost, animated: true)
+                break
+            default:
+                break
+            }
             break
         default:
             break
         }
+    }
+    func postViewControllerSetBody(postVC: UDPostViewController, content: String?) -> String? {
+        if postVC.navigationTitle != nil{
+            switch postVC.navigationTitle! {
+            case "用户名":
+                return "uid=\(uid!)&acode=\(active!)&attr=uname&value=\(content!)"
+            case "个性签名":
+                return "uid=\(uid!)&acode=\(active!)&attr=description&value=\(content!)"
+            default:
+                return nil
+            }
+        }
+        return nil
+    }
+    func postViewControllerDidSucceed(postVC: UDPostViewController, content: String?) {
+        navigationController?.popViewControllerAnimated(true)
     }
     func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
         switch actionSheet.tag {
@@ -452,6 +507,10 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
             }
             
         })
+    }
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        hidesBottomBarWhenPushed = false
     }
 
     /*

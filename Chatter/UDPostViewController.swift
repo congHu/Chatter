@@ -37,6 +37,11 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
     var charsLimit:Int?
     var method:String = "POST"
     var HTTPBody:String?
+    var navSendButtonTitle:String = "发送"
+    func setSendButtonTitle(text:String){
+        navSendButtonTitle = text
+        navigationItem.rightBarButtonItem?.title = text
+    }
     
     var delegate:UDPostViewControllerDelegate?
     
@@ -85,7 +90,7 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
         }
         textView.delegate = self
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "发送", style: .Plain, target: self, action: #selector(UDPostViewController.sendRequest))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: navSendButtonTitle, style: .Plain, target: self, action: #selector(UDPostViewController.sendRequest))
         textView.becomeFirstResponder()
         
     }

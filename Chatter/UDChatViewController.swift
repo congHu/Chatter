@@ -97,6 +97,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillShow(_:)), name: UIKeyboardWillShowNotification, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillUnShow(_:)), name: UIKeyboardWillHideNotification, object: nil)
         
+        
         let msgPath = "\(caches)/\(chatroomID!).plist"
         if NSFileManager.defaultManager().fileExistsAtPath(msgPath){
             msgList = NSMutableArray(contentsOfFile: msgPath)

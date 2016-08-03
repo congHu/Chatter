@@ -17,7 +17,7 @@ enum UDUserRelation {
 //    func pushToChatVCImd(chatVC:UDChatViewController)
 //    
 //}
-class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewControllerDelegate, UITableViewDelegate, UITableViewDataSource {
+class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertViewDelegate, UDPostViewControllerDelegate, UITableViewDelegate, UITableViewDataSource {
 
     var scrollView:UIScrollView!
     
@@ -34,7 +34,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
     var avatar:UIButton!
     var unameLabel:UILabel!
     
-    // TODO: 修改备注按钮
+    //  修改备注按钮
 //    var setFriendCommentBtn:UIButton!
     
     var subLabel:UILabel?
@@ -137,7 +137,6 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
         }
         
         
-        // TODO: 添加设置备注的按钮
         unameLabel = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: avatar.frame.origin.y + 20, width: scrollView.frame.width - avatar.frame.width - 16 - 8 - 16, height: 20))
         scrollView.addSubview(unameLabel)
         unameLabel.textColor = UIColor.whiteColor()
@@ -189,7 +188,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
             }
         })
         
-        // TODO: 个性签名高度根据文字调整
+        
         let infoResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getUserInfo.php?uid=\(thisUid!)")!)
         NSURLConnection.sendAsynchronousRequest(infoResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
             if err == nil{
@@ -243,6 +242,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
                                         infoTableHeight += 44
                                     }
                                 }
+                                // TODO: 个性签名高度根据文字调整
                                 if json?.objectForKey("description") != nil{
                                     if ((json?.objectForKey("description") as? String) != nil){
                                         if self.infosInTable == nil{
@@ -511,7 +511,10 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
                                     self.friendRelation = .Stranger
                                     
                                     dispatch_async(dispatch_get_main_queue(), {
-                                        UIAlertView(title: "操作成功", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+                                        let deleteAlert = UIAlertView(title: "操作成功", message: nil, delegate: self, cancelButtonTitle: "好")
+                                        deleteAlert.tag = 101
+                                        deleteAlert.show()
+                                        
                                         
                                         var toolBarItems:[UIBarButtonItem] = []
                                         toolBarItems.append(UIBarButtonItem(image: UIImage(named: "addFriend"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
@@ -540,6 +543,12 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UDPostViewC
             break
         }
         
+    }
+    
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        if alertView.tag == 101{
+            navigationController?.popToRootViewControllerAnimated(true)
+        }
     }
 
     override func didReceiveMemoryWarning() {
