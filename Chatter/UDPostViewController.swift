@@ -96,6 +96,7 @@ class UDPostViewController: UIViewController, UITextViewDelegate {
     }
     func clearText(){
         textView.text = ""
+        textViewDidChange(textView)
     }
     func sendRequest(){
         let resq = NSMutableURLRequest(URL: NSURL(string: request)!)

@@ -56,6 +56,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         tableView.allowsSelection = false
         tableView.keyboardDismissMode = .OnDrag
         view.addSubview(tableView)
+        tableView.alpha = 0
         
         buttomBar = UIVisualEffectView(frame: CGRect(x: 0, y: view.frame.height - 40, width: view.frame.width, height: 40))
         buttomBar.effect = UIBlurEffect(style: .ExtraLight)
@@ -134,8 +135,12 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     }
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
+        
         if tableView.contentSize.height > tableView.frame.height - 40{
             tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: false)
+        }
+        if tableView.alpha == 0{
+            tableView.alpha = 1
         }
     }
     func gotoSetting(){
@@ -291,6 +296,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     func gotoUser(sender:UIButton){
         let userVC = UDUserViewController()
         // MARK: 进入用户详情
+        tableView.alpha = 0
         userVC.thisUid = String(sender.tag)
         userVC.myUID = myUID
         userVC.acode = myAcode

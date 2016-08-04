@@ -8,7 +8,7 @@
 
 import UIKit
 
-class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, DRMovePanViewDelegate {
     
 //    var loginVC:UDLoginViewController!
     var uid:String?
@@ -253,6 +253,12 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         let msgItem = msg?.objectAtIndex(indexPath.row) as? NSDictionary
         // TODO: 加入Pan手势的滑动删除
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "sd")
+        let msgView = DRMovePanView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 64))
+        msgView.scaleOnMove = false
+        msgView.movableVertical = false
+        msgView.delegate = self
+        msgView.backgroundColor = UIColor.whiteColor()
+        cell.addSubview(msgView)
         
         let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: 48, height: 48))
         avatar.backgroundColor = UIColor.grayColor()
@@ -281,7 +287,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             })
         }
         
-        cell.addSubview(avatar)
+        msgView.addSubview(avatar)
         
         let timeLabel = UILabel(frame: CGRect(x: view.frame.width - 68, y: 8, width: 60, height: 20))
         timeLabel.text = UDChatDate.shortTime(msgItem?.objectForKey("time") as! String)
@@ -290,7 +296,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         timeLabel.textAlignment = .Right
 //        timeLabel.backgroundColor = UIColor.greenColor()
         
-        cell.addSubview(timeLabel)
+        msgView.addSubview(timeLabel)
         
         let unreadInt = msgItem?.objectForKey("unread") as! Int
         
@@ -302,7 +308,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             unreadBadge.textAlignment = .Center
             unreadBadge.layer.cornerRadius = 10
             unreadBadge.layer.masksToBounds = true
-            cell.addSubview(unreadBadge)
+            msgView.addSubview(unreadBadge)
         }
         
         let chatTitle = UILabel(frame: CGRect(x: avatar.frame.origin.x + avatar.frame.width + 8, y: 8, width: view.frame.width - 100 - avatar.frame.width, height: 20))
@@ -311,7 +317,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             chatTitle.text = friendComments?.objectForKey("\(fid)") as? String
         }
 //        chatTitle.backgroundColor = UIColor.greenColor()
-        cell.addSubview(chatTitle)
+        msgView.addSubview(chatTitle)
         
         let textPV = UILabel(frame: CGRect(x: chatTitle.frame.origin.x, y: 36, width: view.frame.width - 60 - avatar.frame.width, height: 20))
         textPV.textColor = UIColor.grayColor()
@@ -341,7 +347,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         textPV.font = UIFont.systemFontOfSize(14)
 //        textPV.backgroundColor = UIColor.greenColor()
-        cell.addSubview(textPV)
+        msgView.addSubview(textPV)
         
         
         
@@ -408,7 +414,19 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         navigationController?.pushViewController(searchVC, animated: true)
     }
     
-    
+    func panViewDidMove(panView: DRMovePanView, gesture: UIPanGestureRecognizer) {
+        
+        if panView.center.x < view.center.x - 100{
+            panView.center.x = view.center.x - 100
+        }
+        if panView.center.x > view.center.x + 10{
+            panView.center.x = view.center.x
+        }
+    }
+    func panViewTouchEnded(panView: DRMovePanView, gesture: UIPanGestureRecognizer) {
+        // TODO: 惯性拨开和惯性收回
+        
+    }
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         hidesBottomBarWhenPushed = false

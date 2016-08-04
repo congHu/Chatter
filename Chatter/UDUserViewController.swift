@@ -49,6 +49,8 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
     
     var reqMsg:String?
     
+    var descriptionHeight:CGFloat = 0
+    
 //    var delegate:UDSingleChatDelegate?
     
     override func viewDidLoad() {
@@ -60,15 +62,17 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         scrollView.alwaysBounceVertical = true
         
         
-        // TODO: 点击封面图、点击头像预览
         
         bgImgView = UIButton(frame: CGRect(x: 0, y: -128, width: scrollView.frame.width, height: scrollView.frame.width))
         scrollView.addSubview(bgImgView)
         bgImgView.backgroundColor = UIColor.lightGrayColor()
         
+        bgImgView.addTarget(self, action: #selector(UDUserViewController.bgImgTap), forControlEvents: .TouchUpInside)
+        
         if NSFileManager.defaultManager().fileExistsAtPath("\(self.caches)/bg_img/user\(self.thisUid!).jpg"){
             bgImgView.setImage(UIImage(contentsOfFile: "\(self.caches)/bg_img/user\(self.thisUid!).jpg"), forState: .Normal)
         }
+        
         
         let bgResq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getBGImg.php?uid=\(thisUid!)")!)
         NSURLConnection.sendAsynchronousRequest(bgResq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
@@ -103,6 +107,8 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         if NSFileManager.defaultManager().fileExistsAtPath(avatarImgPath){
             avatar.setImage(UIImage(contentsOfFile: avatarImgPath), forState: .Normal)
         }
+        avatar.addTarget(self, action: #selector(UDUserViewController.avatarTap), forControlEvents: .TouchUpInside)
+        
         
         if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
             friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
@@ -242,7 +248,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                                         infoTableHeight += 44
                                     }
                                 }
-                                // TODO: 个性签名高度根据文字调整
+                                
                                 if json?.objectForKey("description") != nil{
                                     if ((json?.objectForKey("description") as? String) != nil){
                                         if self.infosInTable == nil{
@@ -250,7 +256,11 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                                         }
                                         self.infosInTable?.setValue(json?.objectForKey("description") as? String, forKey: "description")
                                         self.infoTableView.alpha = 1
-                                        infoTableHeight += 44
+                                        let size = NSString(string: json?.objectForKey("description") as! String).boundingRectWithSize(CGSize(width: 200, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: UIFont.systemFontOfSize(14)], context: nil)
+                                        print(size.height)
+                                        
+                                        self.descriptionHeight = size.height + 27
+                                        infoTableHeight += self.descriptionHeight
                                     }
                                 }
                                 self.infoTableView.frame = CGRect(x: 0, y: self.infoTableView.frame.origin.y, width: self.view.frame.width, height: infoTableHeight)
@@ -346,6 +356,12 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         }
         return 0
     }
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        if indexPath.row == 1{
+            return descriptionHeight
+        }
+        return 44
+    }
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "info")
         if infosInTable != nil{
@@ -357,7 +373,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                     subLabel.font = UIFont.systemFontOfSize(14)
                     subLabel.textColor = UIColor.grayColor()
                     subLabel.textAlignment = .Right
-                    //            subLabel.backgroundColor = UIColor.greenColor()
+//            subLabel.backgroundColor = UIColor.greenColor()
                     cell.addSubview(subLabel)
                     subLabel.text = infosInTable?.objectForKey("birthday") as? String
                 }
@@ -366,11 +382,14 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
             case 1:
                 if infosInTable?.objectForKey("description") != nil{
                     cell.textLabel?.text = "个性签名"
-                    let subLabel = UILabel(frame: CGRect(x: view.frame.width - 132, y: 8, width: 100, height: 28))
+                    
+                    let subLabel = UILabel(frame: CGRect(x: view.frame.width - 216, y: 8, width: 200, height: descriptionHeight - 16))
                     subLabel.font = UIFont.systemFontOfSize(14)
                     subLabel.textColor = UIColor.grayColor()
                     subLabel.textAlignment = .Right
-                    //            subLabel.backgroundColor = UIColor.greenColor()
+//                    subLabel.backgroundColor = UIColor.greenColor()
+                    subLabel.numberOfLines = 0
+                    
                     cell.addSubview(subLabel)
                     subLabel.text = infosInTable?.objectForKey("description") as? String
                 }
@@ -478,6 +497,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         case .Friend:
             switch buttonIndex {
             case 0:
+                // MARK: 修改备注
                 let postVC = UDPostViewController(hint: "输入备注名称", placeholder: unameLabel.text, charsLimit: 10, requestURL: "http://119.29.225.180/notecloud/setFriendComment.php")
                 postVC.delegate = self
                 postVC.navigationTitle = "修改备注"
@@ -485,6 +505,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                 break
             case 1:
                 print("删除")
+                // MARK: 删除好友
                 let deleteResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/deleteFriend.php")!)
                 deleteResq.HTTPMethod = "POST"
                 deleteResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
@@ -549,6 +570,20 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         if alertView.tag == 101{
             navigationController?.popToRootViewControllerAnimated(true)
         }
+    }
+    
+    func bgImgTap(){
+        let bgImgVC = PVImgViewController(imagePrview: bgImgView.imageView?.image)
+        hidesBottomBarWhenPushed = true
+        navigationController?.setNavigationBarHidden(true, animated: true)
+        navigationController?.pushViewController(bgImgVC, animated: true)
+    }
+    
+    func avatarTap(){
+        let bgImgVC = PVImgViewController(imagePrview: avatar.imageView?.image)
+        hidesBottomBarWhenPushed = true
+        navigationController?.setNavigationBarHidden(true, animated: true)
+        navigationController?.pushViewController(bgImgVC, animated: true)
     }
 
     override func didReceiveMemoryWarning() {

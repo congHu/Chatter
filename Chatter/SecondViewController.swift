@@ -228,8 +228,12 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         return 44
     }
     func sectionIndexTitlesForTableView(tableView: UITableView) -> [String]? {
-        
-        return indexKeys
+        var indexs:[String]? = []
+        indexs?.append("*")
+        for i in indexKeys{
+            indexs?.append(i)
+        }
+        return indexs
     }
     func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if section > 0{

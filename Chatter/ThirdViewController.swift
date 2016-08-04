@@ -105,7 +105,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                             if json!.objectForKey("error") == nil{
                                 
                                 self.infos = NSDictionary(dictionary: json!)
-                                print(self.infos)
+//                                print(self.infos)
                                 dispatch_async(dispatch_get_main_queue(), {
                                     self.tableView.reloadData()
                                 })
@@ -181,6 +181,9 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
             case 3:
                 subLabel.text = infos?.objectForKey("birthday") as? String
                 break
+            case 4:
+                subLabel.text = infos?.objectForKey("description") as? String
+                break
             default:
                 break
             }
@@ -225,8 +228,10 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         }
     }
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        tableView.deselectRowAtIndexPath(indexPath, animated: true)
         switch indexPath.section {
         case 0:
+            // MARK: 修改头像的选项
             let as1 = UIActionSheet(title: "修改头像", delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
             as1.tag = 1
             as1.addButtonWithTitle("拍照")
@@ -237,6 +242,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
             break
         case 1:
+            // MARK: 修改封面图的选项
             let as2 = UIActionSheet(title: "修改封面图", delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
             as2.tag = 2
             as2.addButtonWithTitle("拍照")
@@ -252,6 +258,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
             let setAttrUrl = "http://119.29.225.180/notecloud/setAttr.php"
             switch indexPath.row {
             case 0:
+                // MARK: 修改用户名
                 let unamePost = UDPostViewController(hint: "输入用户名", placeholder: infos?.objectForKey("uname") as? String, charsLimit: 10, requestURL: setAttrUrl)
                 unamePost.delegate = self
                 unamePost.navigationTitle = "用户名"
@@ -260,6 +267,12 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 navigationController?.pushViewController(unamePost, animated: true)
                 break
             case 1:
+                // MARK: 修改地区
+                let areaPost = AreaViewController()
+                areaPost.currentArea = infos?.objectForKey("area") as? String
+                areaPost.uidAndAcode = "uid=\(uid!)&acode=\(active!)"
+                hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(areaPost, animated: true)
                 break
             case 2:
                 let genderPost = GenderViewController()
@@ -269,6 +282,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 navigationController?.pushViewController(genderPost, animated: true)
                 break
             case 3:
+                // MARK: 修改生日
                 let birthdayPost = BirthdayViewController()
                 birthdayPost.birthday = infos?.objectForKey("birthday") as? String
                 birthdayPost.uidAndAcode = "uid=\(uid!)&acode=\(active!)"
@@ -276,12 +290,17 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 navigationController?.pushViewController(birthdayPost, animated: true)
                 break
             case 4:
+                // MARK: 修改个性签名
                 let descPost = UDPostViewController(hint: "输入个性签名", placeholder: infos?.objectForKey("description") as? String, charsLimit: 70, requestURL: setAttrUrl)
                 descPost.delegate = self
                 descPost.navigationTitle = "个性签名"
                 descPost.navSendButtonTitle = "设置"
                 hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(descPost, animated: true)
+                break
+            case 5:
+                // TODO: 修改隐私
+                
                 break
             default:
                 break
@@ -439,7 +458,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
                     var sendSuccess = false
                     if err == nil{
-                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
+//                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
                         if let data = returnData{
                             let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                             if json?.objectForKey("error") == nil{
@@ -484,7 +503,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
                     var sendSuccess = false
                     if err == nil{
-                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
+//                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
                         if let data = returnData{
                             let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                             if json?.objectForKey("error") == nil{
