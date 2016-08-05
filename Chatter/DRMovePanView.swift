@@ -23,6 +23,7 @@ class DRMovePanView: UIView, UIGestureRecognizerDelegate {
     var scaleRatio:CGFloat = 1.1
     
     var delegate:DRMovePanViewDelegate?
+    var indexPath:NSIndexPath?
     
     private var touchBegin = false
     var isTouching:Bool{
@@ -69,13 +70,16 @@ class DRMovePanView: UIView, UIGestureRecognizerDelegate {
     
     @objc private func timer(){
         if ges.state == .Possible{
+            if touchBegin{
+                self.delegate?.panViewTouchEnded?(self, gesture: ges)
+            }
             touchBegin = false
             if scaleOnMove{
                 UIView.animateWithDuration(0.2, animations: {
                     self.transform = CGAffineTransformMakeScale(1.0, 1.0)
                 })
             }
-            self.delegate?.panViewTouchEnded?(self, gesture: ges)
+            
         }
     }
     
@@ -106,6 +110,19 @@ class DRMovePanView: UIView, UIGestureRecognizerDelegate {
             self.delegate?.panViewDidMove?(self, gesture: sender)
         }
         
+    }
+
+//    override func gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer) -> Bool {
+////        let point = gestureRecognizer.locationInView(self)
+//        let velocity = (gestureRecognizer as! UIPanGestureRecognizer).velocityInView(self)
+//        print(velocity.x)
+//        if velocity.x > -200{
+//            return false
+//        }
+//        return true
+//    }
+    func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
     
     /*

@@ -8,12 +8,13 @@
 
 import UIKit
 
-class PVImgViewController: UIViewController, UIScrollViewDelegate {
+class PVImgViewController: UIViewController, UIScrollViewDelegate, UIActionSheetDelegate {
 
     var scrollView:UIScrollView!
     var imageView:UIImageView!
     var spinner:UDLoadingSpinner!
     var requestURL:String?
+    var entireImg:UIImage?
     
     override func prefersStatusBarHidden() -> Bool {
         return true
@@ -47,6 +48,8 @@ class PVImgViewController: UIViewController, UIScrollViewDelegate {
         doubleTapGes.numberOfTapsRequired = 2
         tapGes.requireGestureRecognizerToFail(doubleTapGes)
         scrollView.addGestureRecognizer(doubleTapGes)
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(PVImgViewController.imgLongPress(_:)))
+        scrollView.addGestureRecognizer(longPress)
 //        imageView.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(PVImgViewController.imgPinch(_:))))
     }
     
@@ -76,10 +79,30 @@ class PVImgViewController: UIViewController, UIScrollViewDelegate {
         
     }
     
-    func imgPinch(sender:UIPinchGestureRecognizer){
-        if sender.state == .Began || sender.state == .Changed{
-            imageView.transform = CGAffineTransformScale(imageView.transform, sender.scale, sender.scale)
-            sender.scale = 1.0
+    func imgLongPress(sender:UILongPressGestureRecognizer){
+        if sender.state == .Began{
+            let imgAs = UIActionSheet(title: nil, delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
+            imgAs.addButtonWithTitle("保存图片")
+            imgAs.addButtonWithTitle("取消")
+            imgAs.cancelButtonIndex = imgAs.numberOfButtons - 1
+            imgAs.showInView(view)
+        }
+    }
+    
+    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+        if buttonIndex == 0{
+            // MARK: 保存图片到相册
+            
+            UIImageWriteToSavedPhotosAlbum(imageView.image!, self, #selector(PVImgViewController.image(_:didFinishSavingWithError:contextInfo:)), nil)
+            
+        }
+    }
+    
+    func image(image: UIImage, didFinishSavingWithError error: NSError?, contextInfo: AnyObject) {
+        if error == nil {
+            UIAlertView(title: "保存成功", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+        }else{
+            UIAlertView(title: "保存失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
         }
     }
     

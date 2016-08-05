@@ -8,7 +8,7 @@
 
 import UIKit
 
-class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, DRMovePanViewDelegate {
+class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, DRMovePanViewDelegate, CellSwipeButtonsViewDelgate {
     
 //    var loginVC:UDLoginViewController!
     var uid:String?
@@ -18,6 +18,9 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var numOfUnread = 0
     var friendComments:NSDictionary?
+    
+    var currentSwipedCell:UIView?
+    var swipeButtonsViews:[CellSwipeButtonsView] = []
     
     @IBOutlet var navBar: UINavigationItem!
     override func viewDidLoad() {
@@ -40,7 +43,6 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         view.addSubview(tableView)
         tableView.delegate = self
         tableView.dataSource = self
-        
         if NSUserDefaults.standardUserDefaults().objectForKey("user") == nil{
             let loginVC = UDLoginViewController()
             presentViewController(loginVC, animated: false, completion: nil)
@@ -124,7 +126,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             
             
             
-            
+            swipeButtonsViews.removeAll()
             tableView.reloadData()
             
         }
@@ -251,15 +253,30 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     }
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let msgItem = msg?.objectAtIndex(indexPath.row) as? NSDictionary
-        // TODO: 加入Pan手势的滑动删除
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "sd")
+        var buttons:[UIButton] = []
+        let delBtn = UIButton(frame: CGRect(x: 50, y: 0, width: 50, height: 64))
+        delBtn.backgroundColor = UIColor.redColor()
+        delBtn.setTitle("删除", forState: .Normal)
+        delBtn.setTitleColor(UIColor(r: 217, g: 217, b: 217, a: 255), forState: .Normal)
+        buttons.append(delBtn)
+        let cleatRead = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 64))
+        cleatRead.backgroundColor = UIColor.grayColor()
+        cleatRead.setTitle("已读", forState: .Normal)
+        cleatRead.setTitleColor(UIColor(r: 217, g: 217, b: 217, a: 255), forState: .Normal)
+        buttons.append(cleatRead)
+        let swipeButton = CellSwipeButtonsView(buttons: buttons, indexPath: indexPath)
+        swipeButton.delegate = self
+        swipeButton.indexPath = indexPath
+        cell.addSubview(swipeButton)
+        swipeButtonsViews.append(swipeButton)
+        
         let msgView = DRMovePanView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 64))
         msgView.scaleOnMove = false
         msgView.movableVertical = false
         msgView.delegate = self
         msgView.backgroundColor = UIColor.whiteColor()
         cell.addSubview(msgView)
-        
         let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: 48, height: 48))
         avatar.backgroundColor = UIColor.grayColor()
         
@@ -349,11 +366,14 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
 //        textPV.backgroundColor = UIColor.greenColor()
         msgView.addSubview(textPV)
         
-        
+//        let selBG = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 64))
+//        selBG.backgroundColor = UIColor.grayColor()
+//        cell.selectedBackgroundView = selBG
         
         
         return cell
     }
+
     // MARK: 点击进入
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         let msgItem = msg?.objectAtIndex(indexPath.row) as? NSMutableDictionary
@@ -416,16 +436,39 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     
     func panViewDidMove(panView: DRMovePanView, gesture: UIPanGestureRecognizer) {
         
+        // 限制滑动的距离
         if panView.center.x < view.center.x - 100{
             panView.center.x = view.center.x - 100
         }
-        if panView.center.x > view.center.x + 10{
+        if panView.center.x > view.center.x{
             panView.center.x = view.center.x
         }
     }
     func panViewTouchEnded(panView: DRMovePanView, gesture: UIPanGestureRecognizer) {
-        // TODO: 惯性拨开和惯性收回
-        
+        // MARK: 惯性拨开和惯性收回
+        if panView.center.x >= view.center.x - 40{
+            UIView.animateWithDuration(0.3, animations: { 
+                panView.center.x = self.view.center.x
+            })
+            
+        }else if panView.center.x < view.center.x - 40 && panView.center.x >= view.center.x - 100{
+            if self.currentSwipedCell != panView{
+                self.currentSwipedCell?.center.x = self.view.center.x
+            }
+            UIView.animateWithDuration(0.3, animations: {
+                
+                panView.center.x = self.view.center.x - 100
+                }, completion: { (finished) in
+                    self.currentSwipedCell = panView
+            })
+        }
+    }
+    
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+//        UIView.animateWithDuration(0.3) { 
+            self.currentSwipedCell?.center.x = self.view.center.x
+//        }
+        currentSwipedCell = nil
     }
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
@@ -437,6 +480,36 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         // Dispose of any resources that can be recreated.
     }
 
+    func cellSwipeButtonClickedAtIndex(swipeView: CellSwipeButtonsView, indexPath: NSIndexPath?, buttonIndex: Int) {
+        switch buttonIndex {
+        case 0:
+            // MARK: 删除
+            msg?.removeObjectAtIndex(indexPath!.row)
+            tableView.reloadData()
+            msg?.writeToFile("\(caches)/msg.plist", atomically: true)
+            break
+        case 1:
+            // MARK: 已读
+            let msgItem = msg?.objectAtIndex(indexPath!.row) as? NSMutableDictionary
+            numOfUnread -= msgItem?.objectForKey("unread") as! Int
+            
+            if numOfUnread != 0{
+                navBar.title = "消息(\(numOfUnread))"
+                self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
+            }else{
+                navBar.title = "消息"
+                self.tabBarController?.tabBar.items?.first!.badgeValue = nil
+            }
+            
+            msgItem?.setObject(0, forKey: "unread")
+            msg?.writeToFile("\(caches)/msg.plist", atomically: true)
+            
+            self.tableView.reloadData()
+            break
+        default:
+            break
+        }
+    }
 
 }
 class UDSingleChat{

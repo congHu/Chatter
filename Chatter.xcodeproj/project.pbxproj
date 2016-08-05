@@ -24,6 +24,7 @@
 		63347F7B1D45B23A00400BD5 /* UDChatFunc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */; };
 		6337C9BC1D50BB0C0051877E /* UDLoadingSpinner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6337C9BB1D50BB0C0051877E /* UDLoadingSpinner.swift */; };
 		6337C9BE1D50C99D0051877E /* PVImgViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6337C9BD1D50C99D0051877E /* PVImgViewController.swift */; };
+		633A879D1D54490A0067E2BA /* CellSwipeButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 633A879C1D54490A0067E2BA /* CellSwipeButtonsView.swift */; };
 		635902C21D42237D00300A25 /* UDChatDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635902C11D42237D00300A25 /* UDChatDate.swift */; };
 		635902C41D4230C100300A25 /* UDSendStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635902C31D4230C100300A25 /* UDSendStatusView.swift */; };
 		6375BFA21D537134006B3401 /* AreaViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6375BFA11D537134006B3401 /* AreaViewController.swift */; };
@@ -78,6 +79,7 @@
 		63347F7A1D45B23A00400BD5 /* UDChatFunc.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatFunc.swift; sourceTree = "<group>"; };
 		6337C9BB1D50BB0C0051877E /* UDLoadingSpinner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDLoadingSpinner.swift; sourceTree = "<group>"; };
 		6337C9BD1D50C99D0051877E /* PVImgViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PVImgViewController.swift; sourceTree = "<group>"; };
+		633A879C1D54490A0067E2BA /* CellSwipeButtonsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CellSwipeButtonsView.swift; sourceTree = "<group>"; };
 		635902C11D42237D00300A25 /* UDChatDate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDChatDate.swift; sourceTree = "<group>"; };
 		635902C31D4230C100300A25 /* UDSendStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDSendStatusView.swift; sourceTree = "<group>"; };
 		6375BFA11D537134006B3401 /* AreaViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AreaViewController.swift; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 				6337C9BB1D50BB0C0051877E /* UDLoadingSpinner.swift */,
 				63A13A331D3F550800DB7287 /* HexColorExtension.swift */,
 				6375BFA51D539D10006B3401 /* DRMovePanView.swift */,
+				633A879C1D54490A0067E2BA /* CellSwipeButtonsView.swift */,
 			);
 			name = Extensions;
 			sourceTree = "<group>";
@@ -371,6 +374,7 @@
 				6317321A1D4A4DDA0019B512 /* ThirdViewController.swift in Sources */,
 				63A13A321D3F52E200DB7287 /* UDChatViewController.swift in Sources */,
 				63A13A361D3F57CB00DB7287 /* UDChatBubble.swift in Sources */,
+				633A879D1D54490A0067E2BA /* CellSwipeButtonsView.swift in Sources */,
 				63182D231D2BC0F60056DF85 /* UDTextField.swift in Sources */,
 				632086301D52374200BAC0EE /* GenderViewController.swift in Sources */,
 			);

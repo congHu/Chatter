@@ -413,6 +413,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         dismissViewControllerAnimated(true, completion: { () -> Void in
             if picker.view.tag == 1{
                 print("头像")
+                // TODO: 生成一大一小两张头像图片
                 let img = self.resizeImg(image, 128)
                 let imgData = UIImageJPEGRepresentation(img, 0.5)
                 
