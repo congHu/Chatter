@@ -60,6 +60,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/avatar", withIntermediateDirectories: true, attributes: nil)
         //封面文件夹
         _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/bg_img", withIntermediateDirectories: true, attributes: nil)
+        //聊天图片文件夹
+        _ = try? NSFileManager.defaultManager().createDirectoryAtPath("\(caches)/chat_img", withIntermediateDirectories: true, attributes: nil)
         
         
         navBar.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(FirstViewController.gotoSearch))
@@ -362,6 +364,20 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             break
         }
         
+        // MARK: 读取草稿
+        var draftList:NSMutableDictionary?
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/draft.plist"){
+            draftList = NSMutableDictionary(contentsOfFile: "\(caches)/draft.plist")
+        }else{
+            draftList = NSMutableDictionary()
+        }
+        let chatType = msgItem?.objectForKey("send_from") as! String
+        let chatID = msgItem?.objectForKey("fromid") as! String
+        if draftList?.objectForKey("\(chatType)\(chatID)") != nil{
+            textPV.text = "[草稿]"
+            textPV.text! += draftList?.objectForKey("\(chatType)\(chatID)") as! String
+        }
+        
         textPV.font = UIFont.systemFontOfSize(14)
 //        textPV.backgroundColor = UIColor.greenColor()
         msgView.addSubview(textPV)
@@ -392,7 +408,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         self.tableView.reloadData()
         
-        hidesBottomBarWhenPushed = true
+        
+        
         let chatVC = UDChatViewController()
         chatVC.myUID = uid
         chatVC.myAcode = active
@@ -400,6 +417,18 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         // TODO: 需要考虑群聊的情况
         let chatType = msgItem?.objectForKey("send_from") as! String
         let chatID = msgItem?.objectForKey("fromid") as! String
+        
+        // MARK: 读取草稿
+        var draftList:NSMutableDictionary?
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/draft.plist"){
+            draftList = NSMutableDictionary(contentsOfFile: "\(caches)/draft.plist")
+        }else{
+            draftList = NSMutableDictionary()
+        }
+        if draftList?.objectForKey("\(chatType)\(chatID)") != nil{
+            chatVC.draft = draftList?.objectForKey("\(chatType)\(chatID)") as? String
+        }
+        
         if chatType == "user"{
             chatVC.chatroomID = "\(chatType)\(chatID)"
             chatVC.chatroomName = msgItem?.objectForKey("chatname") as? String
@@ -414,6 +443,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         }
         
         chatVC.view.backgroundColor = UIColor.whiteColor()
+        
+        hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(chatVC, animated: true)
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
         

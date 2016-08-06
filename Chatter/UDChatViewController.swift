@@ -8,7 +8,7 @@
 
 import UIKit
 
-class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, UIActionSheetDelegate {
+class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     var chatroomID:String?
     var chatroomName:String?
@@ -71,10 +71,14 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         inputTextView.returnKeyType = .Send
         inputTextView.enablesReturnKeyAutomatically = true
         
+        if draft != nil{
+            inputTextView.text = draft!
+        }
+        
         moreType = UIButton(type: .ContactAdd)
         moreType.frame = CGRect(x: inputTextView.frame.origin.x + inputTextView.frame.width, y: 4, width: buttomBar.frame.height - 7, height: buttomBar.frame.height - 7)
         buttomBar.addSubview(moreType)
-        
+        moreType.addTarget(self, action: #selector(UDChatViewController.moreTypeOption), forControlEvents: .TouchUpInside)
         
         // MARK: 请求加为好友
         if notFriendYet{
@@ -236,6 +240,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
         }
         buttomStartedY = buttomBar.frame.origin.y + buttomChangeHeight
+        tableOffsetYOrigin = self.tableView.contentSize.height - self.tableView.frame.height
 //        isKeyboardShowed = true
     }
     
@@ -580,8 +585,136 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         UIActionSheet(title: "添加黑名单防止该用户骚扰", delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "添加黑名单").showInView(view)
     }
     func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
-        if buttonIndex == 0{
-            print("添加黑名单")
+        if actionSheet.title == "添加黑名单防止该用户骚扰" {
+            if buttonIndex == 0{
+                print("添加黑名单")
+            }
+        }else if actionSheet.title == "发送图片" {
+            switch buttonIndex {
+            case 0:
+                
+                let picker = UIImagePickerController()
+                picker.delegate = self
+                picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
+                picker.allowsEditing = true
+                picker.view.tag = 1
+                if UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Rear) || UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Front){
+                    //picker.cameraCaptureMode = UIImagePickerControllerCameraCaptureMode.Photo
+                    
+                    picker.sourceType = UIImagePickerControllerSourceType.Camera
+                    
+                }else{
+                    print("Camera Unavaliable")
+                }
+                presentViewController(picker, animated: true, completion: nil)
+                
+                break
+            case 1:
+                let picker = UIImagePickerController()
+                picker.delegate = self
+                picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
+                picker.sourceType = UIImagePickerControllerSourceType.PhotoLibrary
+                picker.view.tag = 1
+                presentViewController(picker, animated: true, completion: nil)
+                break
+            default:
+                break
+            }
+        }
+        
+    }
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        // MARK: 草稿更新首页消息列表
+        if inputTextView.text != ""{
+            var draftList:NSMutableDictionary?
+            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/draft.plist"){
+                draftList = NSMutableDictionary(contentsOfFile: "\(caches)/draft.plist")
+            }else{
+                draftList = NSMutableDictionary()
+            }
+            draftList?.setValue(inputTextView.text, forKey: "\(chatroomID!)")
+            draftList?.writeToFile("\(caches)/draft.plist", atomically: true)
+        }else if inputTextView.text == "" {
+            var draftList:NSMutableDictionary?
+            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/draft.plist"){
+                draftList = NSMutableDictionary(contentsOfFile: "\(caches)/draft.plist")
+            }else{
+                draftList = NSMutableDictionary()
+            }
+            if draftList?.objectForKey("\(chatroomID!)") != nil{
+                draftList?.removeObjectForKey("\(chatroomID!)")
+                draftList?.writeToFile("\(caches)/draft.plist", atomically: true)
+            }
+        }
+        
+    }
+    
+    func moreTypeOption(){
+        let as1 = UIActionSheet(title: "发送图片", delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
+        as1.addButtonWithTitle("拍照")
+        as1.addButtonWithTitle("选择照片")
+        as1.addButtonWithTitle("取消")
+        as1.cancelButtonIndex = as1.numberOfButtons - 1
+        as1.showInView(view)
+    }
+    func resizeImg(img:UIImage, _ width:CGFloat) ->UIImage{
+        let newsize = CGSize(width: width, height: (width/img.size.width)*img.size.height)
+        UIGraphicsBeginImageContext(newsize)
+        img.drawInRect(CGRectMake(0, 0, newsize.width, newsize.height))
+        let newimg = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return newimg
+    }
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
+        dismissViewControllerAnimated(true) { 
+            print("头像")
+            // TODO: 生成一大一小两张头像图片
+            let img = self.resizeImg(image, 128)
+            let imgData = UIImageJPEGRepresentation(img, 0.5)
+            
+            let fomatter = NSDateFormatter()
+            fomatter.dateFormat = "yyyyMMddHHmmss"
+            
+            let filename = "user\(self.myUID!)_\(self.chatroomID!)_\(fomatter.stringFromDate(NSDate())).jpg"
+            let path = "\(self.caches)/chat_img/\(filename)"
+            
+            let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/sendImgMsg.php")!)
+            resq.HTTPMethod = "POST"
+            let postData = NSMutableData()
+            
+            resq.setValue("multipart/form-data; boundary=AaB03x", forHTTPHeaderField: "Content-Type")
+            postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"uid\";\r\n\r\n\(self.myUID!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+            postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"acode\";\r\n\r\n\(self.myAcode!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+            postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+            postData.appendData(imgData!)
+            postData.appendData(NSString(string: "\r\n--AaB03x--\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+            resq.setValue(String(postData.length), forHTTPHeaderField: "Content-Length")
+            resq.HTTPBody = postData
+            
+            
+            NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
+                var sendSuccess = false
+                if err == nil{
+//                    print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
+                    if let data = returnData{
+                        let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                        if json?.objectForKey("error") == nil{
+                            sendSuccess = true
+                            dispatch_async(dispatch_get_main_queue(), {
+                                imgData?.writeToFile(path, atomically: true)
+                            })
+                        }
+                    }
+                    
+                }
+                if !sendSuccess{
+                    dispatch_async(dispatch_get_main_queue(), {
+                        UIAlertView(title: "上传失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+                    })
+                    
+                }
+            }
         }
     }
     /*
