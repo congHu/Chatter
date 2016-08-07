@@ -239,6 +239,7 @@ class UDRegViewController: UIViewController {
     }
     
     private func handleResult(res: NSData){
+//        print(NSString(data: res, encoding: NSUTF8StringEncoding))
         let jsonObj = try? NSJSONSerialization.JSONObjectWithData(res, options: .AllowFragments) as! NSDictionary
         if jsonObj != nil{
             if jsonObj?.objectForKey("error") != nil{
@@ -260,6 +261,7 @@ class UDRegViewController: UIViewController {
             }else{
                 // MARK: 注册完成
                 let returnData = try? NSJSONSerialization.JSONObjectWithData(res, options: .AllowFragments) as! NSDictionary
+                
                 let user = NSMutableDictionary()
                 user.setObject(returnData?.objectForKey("activecode") as! String, forKey: "activecode")
                 user.setObject("0", forKey: "isActive")

@@ -51,19 +51,36 @@ class PVImgViewController: UIViewController, UIScrollViewDelegate, UIActionSheet
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(PVImgViewController.imgLongPress(_:)))
         scrollView.addGestureRecognizer(longPress)
 //        imageView.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(PVImgViewController.imgPinch(_:))))
+        
+        
+        
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+    }
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
         if requestURL != nil{
-            spinner = UDLoadingSpinner()
+            spinner = UDLoadingSpinner(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+            spinner.center = view.center
             view.addSubview(spinner)
             spinner.hidesWhenStopped = true
             spinner.startAnimating()
+            NSURLConnection.sendAsynchronousRequest(NSURLRequest(URL: NSURL(string: requestURL!)!), queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+                        let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                        if json == nil{
+                            dispatch_async(dispatch_get_main_queue(), { 
+                                self.imageView.image = UIImage(data: data)
+                                self.spinner.alpha = 0
+                            })
+                        }
+                    }
+                }
+            })
         }
-        
-        
     }
     
     func imgTap(){

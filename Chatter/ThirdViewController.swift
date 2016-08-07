@@ -314,7 +314,12 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         if postVC.navigationTitle != nil{
             switch postVC.navigationTitle! {
             case "用户名":
-                return "uid=\(uid!)&acode=\(active!)&attr=uname&value=\(content!)"
+                if content != "" {
+                    return "uid=\(uid!)&acode=\(active!)&attr=uname&value=\(content!)"
+                }else{
+                    return nil
+                }
+                
             case "个性签名":
                 return "uid=\(uid!)&acode=\(active!)&attr=description&value=\(content!)"
             default:
@@ -324,6 +329,9 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         return nil
     }
     func postViewControllerDidSucceed(postVC: UDPostViewController, content: String?) {
+        if postVC.navigationTitle == "用户名" {
+            NSUserDefaults.standardUserDefaults().setObject("我是\(content!)", forKey: "reqMsg")
+        }
         navigationController?.popViewControllerAnimated(true)
     }
     func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
@@ -417,6 +425,10 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 let img = self.resizeImg(image, 128)
                 let imgData = UIImageJPEGRepresentation(img, 0.5)
                 
+                let imgFull = self.resizeImg(image, 320)
+                let imgDataFull = UIImageJPEGRepresentation(imgFull, 0.5)
+                let filenameFull = "user\(self.uid!)_full.jpg"
+                
                 let filename = "user\(self.uid!).jpg"
                 let path = "\(self.caches)/avatar/\(filename)"
                 
@@ -451,6 +463,8 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"acode\";\r\n\r\n\(self.active!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
                 postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
                 postData.appendData(imgData!)
+                postData.appendData(NSString(string: "\r\n--AaB03x\r\nContent-Disposition: form-data; name=\"full\"; filename=\"\(filenameFull)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(imgDataFull!)
                 postData.appendData(NSString(string: "\r\n--AaB03x--\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
                 resq.setValue(String(postData.length), forHTTPHeaderField: "Content-Length")
                 resq.HTTPBody = postData
@@ -459,7 +473,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
                     var sendSuccess = false
                     if err == nil{
-//                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
+                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
                         if let data = returnData{
                             let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                             if json?.objectForKey("error") == nil{

@@ -8,7 +8,7 @@
 
 import UIKit
 
-class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, DRMovePanViewDelegate, CellSwipeButtonsViewDelgate {
+class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, DRMovePanViewDelegate, CellSwipeButtonsViewDelgate, UIScrollViewDelegate {
     
 //    var loginVC:UDLoginViewController!
     var uid:String?
@@ -21,6 +21,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     
     var currentSwipedCell:UIView?
     var swipeButtonsViews:[CellSwipeButtonsView] = []
+    
+    var inChatRoom:String?
     
     @IBOutlet var navBar: UINavigationItem!
     override func viewDidLoad() {
@@ -130,7 +132,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             
             swipeButtonsViews.removeAll()
             tableView.reloadData()
-            
+            inChatRoom = nil
         }
         
         
@@ -172,10 +174,15 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                             break
                                         }
                                     }
-                                    
+                                    // TODO: 如果在聊天界面内，不刷新未读数量(该功能未测试)
+                                    if self.inChatRoom != nil{
+                                        if self.inChatRoom == "\(sendFromType)\(sendFromID)" {
+                                            unread = 0
+                                        }
+                                    }
                                     msgItem.setObject(unread, forKey: "unread")
                                     self.numOfUnread += unread
-                                    print(self.numOfUnread)
+//                                    print(self.numOfUnread)
                                     
                                     reMsg?.append(msgItem)
                                     
@@ -221,9 +228,14 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                             }
                             
                             dispatch_async(dispatch_get_main_queue(), {
-                                self.navBar.title = "消息(\(self.numOfUnread))"
                                 self.tableView.reloadData()
-                                self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
+                                if self.numOfUnread != 0{
+                                    self.navBar.title = "消息(\(self.numOfUnread))"
+                                    self.tabBarController?.tabBar.items?.first!.badgeValue = "\(self.numOfUnread)"
+                                }else{
+                                    self.navBar.title = "消息"
+                                    self.tabBarController?.tabBar.items?.first!.badgeValue = nil
+                                }
                             })
                         }
                         dispatch_async(dispatch_get_main_queue(), {
@@ -431,12 +443,14 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         if chatType == "user"{
             chatVC.chatroomID = "\(chatType)\(chatID)"
+            inChatRoom = "\(chatType)\(chatID)"
             chatVC.chatroomName = msgItem?.objectForKey("chatname") as? String
             if friendComments?.objectForKey("\(chatID)") != nil{
                 chatVC.chatroomName = friendComments?.objectForKey("\(chatID)") as? String
             }
         }else if chatType.hasPrefix("group"){
             chatVC.chatroomID = "\(chatType)"
+            inChatRoom = "\(chatType)"
         }
         if msgItem?.objectForKey("type") as! String == "req"{
             chatVC.notFriendYet = true
@@ -451,6 +465,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     }
     
     func pushToChatVCImd(chatVC:UDChatViewController){
+        inChatRoom = chatVC.chatroomID
         hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(chatVC, animated: true)
     }
@@ -497,9 +512,23 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     
     func scrollViewDidScroll(scrollView: UIScrollView) {
 //        UIView.animateWithDuration(0.3) { 
-            self.currentSwipedCell?.center.x = self.view.center.x
+//            self.currentSwipedCell?.center.x = self.view.center.x
 //        }
+//        currentSwipedCell = nil
+    }
+    func scrollViewWillBeginDragging(scrollView: UIScrollView) {
+        self.currentSwipedCell?.center.x = self.view.center.x
         currentSwipedCell = nil
+    }
+    func panViewShouldRecognizeSimultaneouslyWithGestureRecognizer(gestureRecognizer: UIGestureRecognizer, otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        let panGes = gestureRecognizer as! UIPanGestureRecognizer
+        let transPoint = panGes.translationInView(view)
+//        print(transPoint)
+        if fabs(transPoint.x) > fabs(transPoint.y) {
+            return false
+        }else{
+            return true
+        }
     }
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)

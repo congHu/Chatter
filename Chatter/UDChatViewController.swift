@@ -40,7 +40,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var msgList:NSMutableArray!
-    
+    var friendComments:NSDictionary!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -139,6 +139,19 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     }
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
+        
+        if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
+            friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
+        }else{
+            friendComments = NSDictionary()
+        }
+        
+        if chatroomID?.hasPrefix("user") == true{
+            let thisID = NSString(string: chatroomID!).substringFromIndex(4)
+            if friendComments.objectForKey("\(thisID)") != nil{
+                navigationItem.title = friendComments.objectForKey("\(thisID)") as? String
+            }
+        }
         
         if tableView.contentSize.height > tableView.frame.height - 40{
             tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: false)

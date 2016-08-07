@@ -44,7 +44,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
     
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     
-    var friendComments:NSDictionary?
+    var friendComments:NSMutableDictionary?
     var friendRelation:UDUserRelation = .Stranger
     
     var reqMsg:String?
@@ -111,7 +111,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         
         
         if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
-            friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
+            friendComments = NSMutableDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
         }else{
             let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
             friendComReq.HTTPMethod = "POST"
@@ -121,7 +121,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                     if let data = returnData{
                         let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                         if jsonObj != nil{
-                            self.friendComments = NSDictionary(dictionary: jsonObj!)
+                            self.friendComments = NSMutableDictionary(dictionary: jsonObj!)
                             self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
                             dispatch_async(dispatch_get_main_queue(), {
                                 if self.friendComments?.objectForKey("\(self.thisUid!)") != nil{
@@ -435,7 +435,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
 //        alert.textFieldAtIndex(0)?.text = reqMsg
 //        alert.show()
         
-        let postVC = UDPostViewController(hint: "输入验证信息", placeholder: reqMsg, charsLimit: 30, requestURL: "http://119.29.225.280/notecloud/sendFriendReq.php")
+        let postVC = UDPostViewController(hint: "输入验证信息", placeholder: reqMsg, charsLimit: 30, requestURL: "http://119.29.225.180/notecloud/sendFriendReq.php")
         postVC.delegate = self
         postVC.navigationTitle = "添加好友"
         navigationController?.pushViewController(postVC, animated: true)
@@ -455,10 +455,23 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         navigationController?.popViewControllerAnimated(true)
         switch postVC.request {
         case "http://119.29.225.280/notecloud/sendFriendReq.php":
+            // MARK: 好友请求发送成功
+            reqMsg = content!
+            NSUserDefaults.standardUserDefaults().setObject(reqMsg, forKey: "reqMsg")
             UIAlertView(title: "请求发送成功", message: nil, delegate: nil, cancelButtonTitle: "好").show()
             break
         case "http://119.29.225.180/notecloud/setFriendComment.php":
-            friendComments?.setValue(content!, forKey: "\(thisUid!)")
+            // MARK: 备注修改成功
+            
+            if content == "" {
+                friendComments?.removeObjectForKey("\(thisUid!)")
+                unameLabel.text = navigationItem.title
+            }else{
+                friendComments?.setValue(content!, forKey: "\(thisUid!)")
+                unameLabel.text = content!
+            }
+            
+            
             friendComments?.writeToFile("\(caches)/friend_comments.plist", atomically: true)
             break
         default:
@@ -466,7 +479,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         }
     }
     func postViewControllerDidFailed(postVC: UDPostViewController, content: String?) {
-        UIAlertView(title: "发送失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
+        UIAlertView(title: "操作失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
     }
     func moreMenu(){
         switch friendRelation {
@@ -581,6 +594,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
     
     func avatarTap(){
         let bgImgVC = PVImgViewController(imagePrview: avatar.imageView?.image)
+        bgImgVC.requestURL = "http://119.29.225.180/notecloud/getAvatarFull.php?uid=\(thisUid!)&type=user"
         hidesBottomBarWhenPushed = true
         navigationController?.setNavigationBarHidden(true, animated: true)
         navigationController?.pushViewController(bgImgVC, animated: true)

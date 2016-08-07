@@ -38,9 +38,24 @@ class UDLoadingSpinner: UIView {
     
     init() {
         
-        super.init(frame: CGRect(x: 0, y: 0, width: UIScreen.mainScreen().bounds.width, height: UIScreen.mainScreen().bounds.width))
+        super.init(frame: CGRect(x: 0, y: 0, width: UIScreen.mainScreen().bounds.width, height: UIScreen.mainScreen().bounds.height))
         spinnerBG = UIView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
         spinnerBG.center = self.center
+        spinnerBG.backgroundColor = UIColor(white: 0, alpha: 0.75)
+        spinnerBG.layer.cornerRadius = 5
+        self.addSubview(spinnerBG)
+        spinner = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        spinner.center = CGPoint(x: 25, y: 25)
+        spinner.activityIndicatorViewStyle = .White
+        spinner.startAnimating()
+        
+        spinnerBG.addSubview(spinner)
+        
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        spinnerBG = UIView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
         spinnerBG.backgroundColor = UIColor(white: 0, alpha: 0.75)
         spinnerBG.layer.cornerRadius = 5
         self.addSubview(spinnerBG)

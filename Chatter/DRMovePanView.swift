@@ -11,6 +11,7 @@ import UIKit
 @objc protocol DRMovePanViewDelegate {
     optional func panViewDidMove(panView: DRMovePanView, gesture: UIPanGestureRecognizer)
     optional func panViewTouchEnded(panView: DRMovePanView, gesture: UIPanGestureRecognizer)
+    optional func panViewShouldRecognizeSimultaneouslyWithGestureRecognizer(gestureRecognizer: UIGestureRecognizer, otherGestureRecognizer: UIGestureRecognizer) -> Bool
 }
 
 class DRMovePanView: UIView, UIGestureRecognizerDelegate {
@@ -122,7 +123,12 @@ class DRMovePanView: UIView, UIGestureRecognizerDelegate {
 //        return true
 //    }
     func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return true
+        if delegate?.panViewShouldRecognizeSimultaneouslyWithGestureRecognizer?(gestureRecognizer, otherGestureRecognizer: otherGestureRecognizer) != nil{
+            return (delegate?.panViewShouldRecognizeSimultaneouslyWithGestureRecognizer!(gestureRecognizer, otherGestureRecognizer: otherGestureRecognizer))!
+        }else{
+            return true
+        }
+        
     }
     
     /*
