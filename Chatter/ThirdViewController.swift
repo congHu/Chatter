@@ -22,6 +22,10 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView = UITableView(frame: view.frame, style: .Grouped)
+        // ios7
+        if NSString(string: UIDevice.currentDevice().systemVersion).floatValue < 8.0{
+            tableView.frame = CGRect(x: 0, y: 64, width: view.frame.width, height: view.frame.height - 113)
+        }
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -421,7 +425,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         dismissViewControllerAnimated(true, completion: { () -> Void in
             if picker.view.tag == 1{
                 print("头像")
-                // TODO: 生成一大一小两张头像图片
+                // MARK: 生成一大一小两张头像图片
                 let img = self.resizeImg(image, 128)
                 let imgData = UIImageJPEGRepresentation(img, 0.5)
                 

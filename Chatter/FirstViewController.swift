@@ -20,6 +20,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     var friendComments:NSDictionary?
     
     var currentSwipedCell:UIView?
+    var currentSwipingCell:UIView?
+    var scrollViewDragging = false
     var swipeButtonsViews:[CellSwipeButtonsView] = []
     
     var inChatRoom:String?
@@ -42,6 +44,10 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         }
         
         tableView = UITableView(frame: view.frame)
+        // ios7
+        if NSString(string: UIDevice.currentDevice().systemVersion).floatValue < 8.0{
+            tableView.frame = CGRect(x: 0, y: 64, width: view.frame.width, height: view.frame.height - 113)
+        }
         view.addSubview(tableView)
         tableView.delegate = self
         tableView.dataSource = self
@@ -117,9 +123,10 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                     if err == nil{
                         if let data = returnData{
 //                            print(NSString(data: data, encoding: NSUTF8StringEncoding))
-                            let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
-                            if jsonObj != nil{
-                                self.friendComments = NSDictionary(dictionary: jsonObj!)
+                            let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments)
+                            let jsonDict = jsonObj as? NSDictionary
+                            if jsonDict != nil{
+                                self.friendComments = NSDictionary(dictionary: jsonDict!)
                                 self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
                             }
                             
@@ -174,7 +181,7 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
                                             break
                                         }
                                     }
-                                    // TODO: 如果在聊天界面内，不刷新未读数量(该功能未测试)
+                                    // MARK: 如果在聊天界面内，不刷新未读数量
                                     if self.inChatRoom != nil{
                                         if self.inChatRoom == "\(sendFromType)\(sendFromID)" {
                                             unread = 0
@@ -329,13 +336,14 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         msgView.addSubview(timeLabel)
         
+        // 未读
         let unreadInt = msgItem?.objectForKey("unread") as! Int
         
         if unreadInt != 0{
             let unreadBadge = UILabel(frame: CGRect(x: view.frame.width - 28, y: 36, width: 20, height: 20))
             unreadBadge.text = "\(unreadInt)"
             unreadBadge.backgroundColor = UIColor.redColor()
-            unreadBadge.textColor = UIColor.whiteColor()
+            unreadBadge.textColor = UIColor(r: 217, g: 217, b: 217, a: 255)
             unreadBadge.textAlignment = .Center
             unreadBadge.layer.cornerRadius = 10
             unreadBadge.layer.masksToBounds = true
@@ -481,7 +489,10 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
     }
     
     func panViewDidMove(panView: DRMovePanView, gesture: UIPanGestureRecognizer) {
-        
+        currentSwipingCell = panView
+        if scrollViewDragging{
+            panView.center.x = view.center.x
+        }
         // 限制滑动的距离
         if panView.center.x < view.center.x - 100{
             panView.center.x = view.center.x - 100
@@ -515,10 +526,17 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
 //            self.currentSwipedCell?.center.x = self.view.center.x
 //        }
 //        currentSwipedCell = nil
+        if currentSwipingCell != nil{
+            currentSwipingCell?.center.x = view.center.x
+        }
     }
     func scrollViewWillBeginDragging(scrollView: UIScrollView) {
         self.currentSwipedCell?.center.x = self.view.center.x
         currentSwipedCell = nil
+        scrollViewDragging = true
+    }
+    func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        scrollViewDragging = false
     }
     func panViewShouldRecognizeSimultaneouslyWithGestureRecognizer(gestureRecognizer: UIGestureRecognizer, otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         let panGes = gestureRecognizer as! UIPanGestureRecognizer

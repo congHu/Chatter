@@ -36,7 +36,11 @@ class AreaViewController: UIViewController, UITableViewDelegate, UITableViewData
         if CLLocationManager.locationServicesEnabled(){
             locationManager = CLLocationManager()
             locationManager.delegate = self
-            locationManager.requestWhenInUseAuthorization()
+            if #available(iOS 8.0, *) {
+                locationManager.requestWhenInUseAuthorization()
+            } else {
+                // Fallback on earlier versions
+            }
             locationManager.startUpdatingLocation()
             
         }else{

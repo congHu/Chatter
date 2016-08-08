@@ -25,6 +25,10 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         // Do any additional setup after loading the view, typically from a nib.
         
         tableView = UITableView(frame: view.frame)
+        // ios7
+        if NSString(string: UIDevice.currentDevice().systemVersion).floatValue < 8.0{
+            tableView.frame = CGRect(x: 0, y: 64, width: view.frame.width, height: view.frame.height - 113)
+        }
         view.addSubview(tableView)
         tableView.delegate = self
         tableView.dataSource = self
@@ -65,7 +69,7 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 indexKeys.append(upperChar)
             }
         }
-        print(indexKeys)
+//        print(indexKeys)
         // 生成每组的行数
         for i in 0..<indexKeys.count{
             var numOfRow = 0
@@ -245,7 +249,11 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
         let cell = UITableViewCell(style: .Default, reuseIdentifier: "friend")
         if indexPath.section > 0{
             if friendList.count != 0{
-                let thisIndex = indexPath.row + (indexPath.section-1)*numOfRows[indexPath.section-1]
+                var thisIndex = indexPath.row
+                for i in 0..<indexPath.section-1{
+                    thisIndex += numOfRows[i]
+                }
+                
                 let friendItem = friendList.objectAtIndex(thisIndex) as? NSDictionary
                 
                 let avatar = UIImageView(frame: CGRect(x: 16, y: 8, width: cell.frame.height - 16, height: cell.frame.height - 16))

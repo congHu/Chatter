@@ -16,11 +16,11 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     var myAcode:String?
     var notFriendYet = false
     
-    // TODO: 草稿功能
+    // MARK: 草稿功能
     var draft:String?
     var rootVC:FirstViewController?
     
-    private var buttomBar: UIVisualEffectView!
+    private var buttomBar: UIView!
     var tableView:UITableView!
     var moreType:UIButton!
     
@@ -36,7 +36,8 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     //private var keyboardAnimating = false
     
     var addFriendComfirm:UIButton?
-    var blackListOption:UIButton?
+    var blackListOption:UIBarButtonItem?
+    var blackListOptionBar:UIToolbar?
     
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var msgList:NSMutableArray!
@@ -58,8 +59,10 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         view.addSubview(tableView)
         tableView.alpha = 0
         
-        buttomBar = UIVisualEffectView(frame: CGRect(x: 0, y: view.frame.height - 40, width: view.frame.width, height: 40))
-        buttomBar.effect = UIBlurEffect(style: .ExtraLight)
+        
+        buttomBar = UIView(frame: CGRect(x: 0, y: view.frame.height - 40, width: view.frame.width, height: 40))
+        //buttomBar.effect = UIBlurEffect(style: .ExtraLight)
+        buttomBar.backgroundColor = UIColor(white: 1, alpha: 0.8)
         view.addSubview(buttomBar)
         inputTextView = UITextView(frame: CGRect(x: 8, y: 4, width: buttomBar.frame.width - 40, height: buttomBar.frame.height - 8))
         inputTextView.backgroundColor = UIColor.clearColor()
@@ -88,13 +91,21 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             addFriendComfirm?.frame = inputTextView.frame
             buttomBar.addSubview(addFriendComfirm!)
             addFriendComfirm?.setTitle("添加为好友", forState: .Normal)
-            blackListOption = UIButton(frame: moreType.frame)
+            
+            blackListOptionBar = UIToolbar(frame: CGRect(x: view.frame.width - 45, y: 0, width: 45, height: 45))
+            blackListOptionBar?.backgroundColor = UIColor(white: 1, alpha: 0.8)
+            blackListOptionBar?.layer.borderWidth = 0.0
+            blackListOptionBar?.layer.masksToBounds = true
+            buttomBar.addSubview(blackListOptionBar!)
+            
+            blackListOption = UIBarButtonItem(image: UIImage(named: "more"), style: .Plain, target: self, action: #selector(UDChatViewController.showBlackListOption))
+            blackListOptionBar?.setItems([blackListOption!], animated: false)
             // TODO: 黑名单按钮的图片
-            blackListOption?.setImage(UIImage(named: "more"), forState: .Normal)
-            buttomBar.addSubview(blackListOption!)
+//            blackListOption?.setImage(UIImage(named: "more"), forState: .Normal)
+//            buttomBar.addSubview(blackListOption!)
             
             addFriendComfirm?.addTarget(self, action: #selector(UDChatViewController.comfirmFriend), forControlEvents: .TouchUpInside)
-            blackListOption?.addTarget(self, action: #selector(UDChatViewController.showBlackListOption), forControlEvents: .TouchUpInside)
+//            blackListOption?.addTarget(self, action: #selector(UDChatViewController.showBlackListOption), forControlEvents: .TouchUpInside)
         }
         
         buttomOriginY = buttomBar.frame.origin.y
@@ -570,7 +581,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             if sendSuccess {
                 dispatch_async(dispatch_get_main_queue(), {
                     self.addFriendComfirm?.alpha = 0
-                    self.blackListOption?.alpha = 0
+                    self.blackListOptionBar?.alpha = 0
                     self.inputTextView.alpha = 1
                     self.moreType.alpha = 1
                 })
@@ -681,8 +692,8 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     }
     func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
         dismissViewControllerAnimated(true) { 
-            print("头像")
-            // TODO: 生成一大一小两张头像图片
+            print("发图片")
+            // TODO: 生成一大一小两张图片
             let img = self.resizeImg(image, 128)
             let imgData = UIImageJPEGRepresentation(img, 0.5)
             

@@ -114,13 +114,19 @@ class DRMovePanView: UIView, UIGestureRecognizerDelegate {
     }
 
 //    override func gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer) -> Bool {
-////        let point = gestureRecognizer.locationInView(self)
+//        let point = gestureRecognizer.locationInView(self)
 //        let velocity = (gestureRecognizer as! UIPanGestureRecognizer).velocityInView(self)
 //        print(velocity.x)
 //        if velocity.x > -200{
 //            return false
 //        }
-//        return true
+        
+//        let panGes = gestureRecognizer as! UIPanGestureRecognizer
+//        let transPoint = panGes.translationInView(self)
+//        if fabs(transPoint.x) > fabs(transPoint.y) {
+//            return true
+//        }
+//        return false
 //    }
     func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         if delegate?.panViewShouldRecognizeSimultaneouslyWithGestureRecognizer?(gestureRecognizer, otherGestureRecognizer: otherGestureRecognizer) != nil{

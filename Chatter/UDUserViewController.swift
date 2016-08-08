@@ -119,9 +119,10 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
             NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
                 if err == nil{
                     if let data = returnData{
-                        let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
-                        if jsonObj != nil{
-                            self.friendComments = NSMutableDictionary(dictionary: jsonObj!)
+                        let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments)
+                        let jsonDict = jsonObj as? NSDictionary
+                        if jsonDict != nil{
+                            self.friendComments = NSMutableDictionary(dictionary: jsonDict!)
                             self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
                             dispatch_async(dispatch_get_main_queue(), {
                                 if self.friendComments?.objectForKey("\(self.thisUid!)") != nil{
@@ -454,7 +455,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
     func postViewControllerDidSucceed(postVC: UDPostViewController, content: String?) {
         navigationController?.popViewControllerAnimated(true)
         switch postVC.request {
-        case "http://119.29.225.280/notecloud/sendFriendReq.php":
+        case "http://119.29.225.180/notecloud/sendFriendReq.php":
             // MARK: 好友请求发送成功
             reqMsg = content!
             NSUserDefaults.standardUserDefaults().setObject(reqMsg, forKey: "reqMsg")

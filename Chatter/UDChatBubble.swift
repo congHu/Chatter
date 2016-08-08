@@ -15,15 +15,35 @@ enum UDChatBubbleStyle {
     case Req
 }
 
+enum UDMessageType {
+    case String
+    case Image
+    case Voice
+    case Video
+    case Location
+}
+@objc protocol UDChatBubbleDelegate {
+    optional func chatBubble(chatBubble: UDChatBubble, clickedImageButtonView imageButton: UIButton)
+}
 class UDChatBubble: UIView {
     
     private var bubbleStyle:UDChatBubbleStyle = .System
     private var bubbleBG:UIView!
+    
+    private var messageType:UDMessageType = .String
+    
     private var textContainer:UILabel!
     private var content:String! = "System test text"
+    
+    private var image:UIImage?
+    private var imageView:UIButton?
+    var delegate:UDChatBubbleDelegate?
+    
     private var maxWidth:CGFloat!
+    
     private var uid:String?
     var avatar:UIButton?
+    
     var style:UDChatBubbleStyle{
         get {
             return bubbleStyle
@@ -43,6 +63,14 @@ class UDChatBubble: UIView {
         self.uid = uid
         load()
     }
+    convenience init(frame: CGRect, style: UDChatBubbleStyle, img: UIImage, uid: String?) {
+        self.init(frame: frame)
+        bubbleStyle = style
+        messageType = .Image
+        image = img
+        self.uid = uid
+        load()
+    }
     
     func load(){
         self.backgroundColor = UIColor.clearColor()
@@ -55,11 +83,17 @@ class UDChatBubble: UIView {
             textContainer.font = UIFont.systemFontOfSize(10)
         }
         
-        let size = NSString(string: content).boundingRectWithSize(CGSize(width: maxWidth, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: textContainer.font], context: nil)
+        var size = NSString(string: content).boundingRectWithSize(CGSize(width: maxWidth, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: textContainer.font], context: nil)
+        if image != nil{
+            size = CGRect(x: 0, y: 0, width: image!.size.width, height: image!.size.height)
+        }
         
         switch bubbleStyle {
         case .Left:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
+            if messageType == .Image{
+                imageView = UIButton(frame: CGRect(x: 8, y: 0, width: size.width, height: size.height))
+            }
             bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.15, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 53, g: 152, b: 219, a: 225)
             bubbleBG.layer.cornerRadius = 8
@@ -69,6 +103,7 @@ class UDChatBubble: UIView {
             // TODO: 好友请求显示
         case .Req:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
+            
             bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.15, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 53, g: 152, b: 219, a: 225)
             bubbleBG.layer.cornerRadius = 8
@@ -77,6 +112,9 @@ class UDChatBubble: UIView {
             break
         case .Right:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
+            if messageType == .Image{
+                imageView = UIButton(frame: CGRect(x: 8, y: 0, width: size.width, height: size.height))
+            }
             bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.85 - size.width - 16, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 39, g: 174, b: 97, a: 255)
             bubbleBG.layer.cornerRadius = 8
@@ -99,10 +137,24 @@ class UDChatBubble: UIView {
         }
         
         textContainer.center.y = bubbleBG.center.y
+        
+        
         textContainer.text = content
         textContainer.textColor = UIColor.whiteColor()
+        
+        
         self.addSubview(bubbleBG)
         bubbleBG.addSubview(textContainer)
+        if messageType == .Image{
+            imageView?.center.y = bubbleBG.center.y
+            if image != nil{
+                imageView?.setImage(image, forState: .Normal)
+            }else{
+                // TODO: 联网获取缩略图
+            }
+            
+            bubbleBG.addSubview(imageView!)
+        }
         avatar?.backgroundColor = UIColor.grayColor()
         avatar?.adjustsImageWhenHighlighted = true
         if bubbleStyle != .System{
