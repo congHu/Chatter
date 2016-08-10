@@ -36,13 +36,23 @@ class UDChatBubble: UIView {
     private var content:String! = "System test text"
     
     private var image:UIImage?
-    private var imageView:UIButton?
+    var imageView:UIButton?
+    var imageToShow:UIImage{
+        get{
+            return image!
+        }
+        set(img){
+            image = img
+            imageView?.setImage(img, forState: .Normal)
+        }
+    }
     var delegate:UDChatBubbleDelegate?
     
     private var maxWidth:CGFloat!
     
     private var uid:String?
     var avatar:UIButton?
+    var indexPath: NSIndexPath!
     
     var style:UDChatBubbleStyle{
         get {
@@ -54,25 +64,29 @@ class UDChatBubble: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
     }
     
-    convenience init(frame: CGRect, style: UDChatBubbleStyle, text: String, uid: String?) {
+    convenience init(frame: CGRect, style: UDChatBubbleStyle, text: String, uid: String?, indexPath: NSIndexPath) {
         self.init(frame: frame)
         bubbleStyle = style
         content = text
         self.uid = uid
+        self.indexPath = indexPath
         load()
     }
-    convenience init(frame: CGRect, style: UDChatBubbleStyle, img: UIImage, uid: String?) {
+    convenience init(frame: CGRect, style: UDChatBubbleStyle, img: UIImage?, uid: String?, indexPath: NSIndexPath) {
         self.init(frame: frame)
         bubbleStyle = style
         messageType = .Image
         image = img
         self.uid = uid
+        self.indexPath = indexPath
         load()
     }
     
     func load(){
+//        self.backgroundColor = UIColor.greenColor()
         self.backgroundColor = UIColor.clearColor()
         maxWidth = UIScreen.mainScreen().bounds.width*0.6
         textContainer = UILabel()
@@ -84,16 +98,18 @@ class UDChatBubble: UIView {
         }
         
         var size = NSString(string: content).boundingRectWithSize(CGSize(width: maxWidth, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: textContainer.font], context: nil)
-        if image != nil{
-            size = CGRect(x: 0, y: 0, width: image!.size.width, height: image!.size.height)
+        if messageType == .Image{
+            if image != nil{
+                size = CGRect(x: 0, y: 0, width: image!.size.width, height: image!.size.height)
+            }else{
+                size = CGRect(x: 0, y: 0, width: 64, height: 64)
+            }
         }
+        
         
         switch bubbleStyle {
         case .Left:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
-            if messageType == .Image{
-                imageView = UIButton(frame: CGRect(x: 8, y: 0, width: size.width, height: size.height))
-            }
             bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.15, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 53, g: 152, b: 219, a: 225)
             bubbleBG.layer.cornerRadius = 8
@@ -112,9 +128,6 @@ class UDChatBubble: UIView {
             break
         case .Right:
             textContainer.frame = CGRect(x: 8, y: 0, width: size.width, height: size.height)
-            if messageType == .Image{
-                imageView = UIButton(frame: CGRect(x: 8, y: 0, width: size.width, height: size.height))
-            }
             bubbleBG = UIView(frame: CGRect(x: UIScreen.mainScreen().bounds.width*0.85 - size.width - 16, y: 0, width: size.width + 16, height: size.height + 16))
             bubbleBG.backgroundColor = UIColor(r: 39, g: 174, b: 97, a: 255)
             bubbleBG.layer.cornerRadius = 8
@@ -146,14 +159,17 @@ class UDChatBubble: UIView {
         self.addSubview(bubbleBG)
         bubbleBG.addSubview(textContainer)
         if messageType == .Image{
+            imageView = UIButton(frame: CGRect(x: 8, y: 0, width: size.width, height: size.height))
+//            imageView?.userInteractionEnabled = true
+//            bubbleBG.userInteractionEnabled = true
             imageView?.center.y = bubbleBG.center.y
+            imageView?.backgroundColor = UIColor.grayColor()
             if image != nil{
                 imageView?.setImage(image, forState: .Normal)
-            }else{
-                // TODO: 联网获取缩略图
             }
             
             bubbleBG.addSubview(imageView!)
+            imageView?.addTarget(self, action: #selector(UDChatBubble.imageViewClick(_:)), forControlEvents: .TouchUpInside)
         }
         avatar?.backgroundColor = UIColor.grayColor()
         avatar?.adjustsImageWhenHighlighted = true
@@ -236,5 +252,8 @@ class UDChatBubble: UIView {
         
     }
     
+    func imageViewClick(sender: UIButton){
+        delegate?.chatBubble?(self, clickedImageButtonView: sender)
+    }
 
 }

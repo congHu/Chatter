@@ -8,6 +8,10 @@
 
 import UIKit
 
+@objc protocol PVImgViewControllerDelegate {
+    optional func pvImgViewController(pvVC: PVImgViewController, finishedLoadingURLImage URL: String, image: UIImage)
+}
+
 class PVImgViewController: UIViewController, UIScrollViewDelegate, UIActionSheetDelegate {
 
     var scrollView:UIScrollView!
@@ -15,6 +19,7 @@ class PVImgViewController: UIViewController, UIScrollViewDelegate, UIActionSheet
     var spinner:UDLoadingSpinner!
     var requestURL:String?
     var entireImg:UIImage?
+    var delegate:PVImgViewControllerDelegate?
     
     override func prefersStatusBarHidden() -> Bool {
         return true
@@ -75,6 +80,7 @@ class PVImgViewController: UIViewController, UIScrollViewDelegate, UIActionSheet
                             dispatch_async(dispatch_get_main_queue(), { 
                                 self.imageView.image = UIImage(data: data)
                                 self.spinner.alpha = 0
+                                self.delegate?.pvImgViewController?(self, finishedLoadingURLImage: self.requestURL!, image: UIImage(data: data)!)
                             })
                         }
                     }

@@ -413,23 +413,16 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    func resizeImg(img:UIImage, _ width:CGFloat) ->UIImage{
-        let newsize = CGSize(width: width, height: (width/img.size.width)*img.size.height)
-        UIGraphicsBeginImageContext(newsize)
-        img.drawInRect(CGRectMake(0, 0, newsize.width, newsize.height))
-        let newimg = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return newimg
-    }
+
     func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
         dismissViewControllerAnimated(true, completion: { () -> Void in
             if picker.view.tag == 1{
                 print("头像")
                 // MARK: 生成一大一小两张头像图片
-                let img = self.resizeImg(image, 128)
+                let img = UIImage(image: image, resizeRatioWithWidth: 128)
                 let imgData = UIImageJPEGRepresentation(img, 0.5)
                 
-                let imgFull = self.resizeImg(image, 320)
+                let imgFull = UIImage(image: image, resizeRatioWithWidth: 320)
                 let imgDataFull = UIImageJPEGRepresentation(imgFull, 0.5)
                 let filenameFull = "user\(self.uid!)_full.jpg"
                 
@@ -499,7 +492,7 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 }
             }else if picker.view.tag == 2{
                 print("封面图")
-                let img = self.resizeImg(image, 480)
+                let img = UIImage(image: image, resizeRatioWithWidth: 480)
                 let imgData = UIImageJPEGRepresentation(img, 0.5)
                 
                 let filename = "user\(self.uid!).jpg"

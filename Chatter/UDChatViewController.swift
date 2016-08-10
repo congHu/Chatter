@@ -8,7 +8,7 @@
 
 import UIKit
 
-class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UDChatBubbleDelegate, PVImgViewControllerDelegate {
 
     var chatroomID:String?
     var chatroomName:String?
@@ -42,6 +42,8 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     let caches = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true).first!
     var msgList:NSMutableArray!
     var friendComments:NSDictionary!
+    
+    var sendingQueue:[Int] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -100,12 +102,9 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             
             blackListOption = UIBarButtonItem(image: UIImage(named: "more"), style: .Plain, target: self, action: #selector(UDChatViewController.showBlackListOption))
             blackListOptionBar?.setItems([blackListOption!], animated: false)
-            // TODO: 黑名单按钮的图片
-//            blackListOption?.setImage(UIImage(named: "more"), forState: .Normal)
-//            buttomBar.addSubview(blackListOption!)
+
             
             addFriendComfirm?.addTarget(self, action: #selector(UDChatViewController.comfirmFriend), forControlEvents: .TouchUpInside)
-//            blackListOption?.addTarget(self, action: #selector(UDChatViewController.showBlackListOption), forControlEvents: .TouchUpInside)
         }
         
         buttomOriginY = buttomBar.frame.origin.y
@@ -199,26 +198,87 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             if sendFromType == "user"{
                 let fromID = curItem.objectForKey("fromid") as! String
                 // TODO: 还没考虑群聊的情况, 和其他类型消息的情况
-                if curItem.objectForKey("type") as! String == "req"{
-                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil)
-                }
+                 let msgType = curItem.objectForKey("type") as! String
+//                if curItem.objectForKey("type") as! String == "req"{
+//                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil)
+//                }
                 if fromID != myUID{
-                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
+                    
+                    switch msgType {
+                    case "image":
+                        // MARK: 读取缩略图
+                        let thum_img = UIImage(contentsOfFile: "\(caches)/chat_img/\(msgText)")
+                        if thum_img != nil{
+                            bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: view.frame.width, height: 96), style: .Left, img: thum_img, uid: fromID, indexPath: indexPath)
+                        }else{
+                            bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: view.frame.width, height: 96), style: .Left, img: nil, uid: fromID, indexPath: indexPath)
+                        }
+                        bubble.delegate = self
+                        let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getChatImg.php?filename=\(msgText)")!)
+                        NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                            if err == nil{
+                                if let data = returnData{
+                                    let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
+                                    if json == nil{
+                                        dispatch_async(dispatch_get_main_queue(), {
+                                            bubble.imageToShow = UIImage(data: data)!
+                                            data.writeToFile("\(self.caches)/chat_img/\(msgText)", atomically: true)
+                                        })
+                                    }
+                                }
+                            }
+                        })
+                        
+                        break
+                    default:
+                        
+                        bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: view.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID, indexPath: indexPath)
+                        break
+                    }
                 }else{
-                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID)
+                    switch msgType {
+                    case "image":
+                        // MARK: 读取缩略图
+                        let thum_img = UIImage(contentsOfFile: "\(caches)/chat_img/\(msgText)")
+                        if thum_img != nil{
+                            bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: view.frame.width, height: 96), style: .Right, img: thum_img, uid: fromID, indexPath: indexPath)
+                        }else{
+                            bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: view.frame.width, height: 96), style: .Right, img: nil, uid: fromID, indexPath: indexPath)
+                        }
+                        bubble.delegate = self
+                        let resq = NSURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getChatImg.php?filename=\(msgText)")!)
+                        NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue(), completionHandler: { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                            if err == nil{
+                                if let data = returnData{
+                                    let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as? NSDictionary
+                                    if json == nil{
+                                        dispatch_async(dispatch_get_main_queue(), {
+                                            bubble.imageToShow = UIImage(data: data)!
+                                            data.writeToFile("\(self.caches)/chat_img/\(msgText)", atomically: true)
+                                        })
+                                    }
+                                }
+                            }
+                        })
+                        break
+                    default:
+                        bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID, indexPath: indexPath)
+                        break
+                    }
+                    
                 }
             }else if sendFromType == "system"{
-                bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil)
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: msgText, uid: nil, indexPath: indexPath)
             }else if sendFromType == "timeMark"{
                 
-                bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: UDChatDate.longTime(curItem.objectForKey("time") as! String)!, uid: nil)
+                bubble = UDChatBubble(frame: CGRect(x: 0, y: 24, width: cell.frame.width, height: cell.frame.height-32), style: .System, text: UDChatDate.longTime(curItem.objectForKey("time") as! String)!, uid: nil, indexPath: indexPath)
             }
 //            else if sendFromType.hasPrefix("group"){
 //                
 //                if fromID != myUID{
-//                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID)
+//                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Left, text: msgText, uid: fromID, indexPath: indexPath)
 //                }else{
-//                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID)
+//                    bubble = UDChatBubble(frame: CGRect(x: 0, y: 16, width: cell.frame.width, height: cell.frame.height-32), style: .Right, text: msgText, uid: fromID, indexPath: indexPath)
 //                }
 //            }
             
@@ -234,10 +294,18 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         switch indexPath.section {
         case 0:
+            
             let curItem = msgList.objectAtIndex(indexPath.row) as! NSDictionary
-            let msgText = curItem.objectForKey("body") as! String
-            let size = NSString(string: msgText).boundingRectWithSize(CGSize(width: UIScreen.mainScreen().bounds.width*0.6, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: UIFont.systemFontOfSize(14)], context: nil)
-            return size.height + 32
+            let msgType = curItem.objectForKey("type") as! String
+            switch msgType {
+            case "image":
+                return 96
+            default:
+                let msgText = curItem.objectForKey("body") as! String
+                let size = NSString(string: msgText).boundingRectWithSize(CGSize(width: UIScreen.mainScreen().bounds.width*0.6, height: CGFloat(MAXFLOAT)), options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: [NSFontAttributeName: UIFont.systemFontOfSize(14)], context: nil)
+                return size.height + 32
+            }
+            
         case 1:
             return 48 + buttomChangeHeight
         default:
@@ -384,7 +452,6 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                 msgToSend.setValue("user", forKey: "send_from")
                 msgToSend.setValue("\(myUID!)", forKey: "fromid")
                 
-                // TODO: 需要支持更多的type
                 msgToSend.setValue("string", forKey: "type")
                 
                 msgToSend.setValue("\(thisMsgBody)", forKey: "body")
@@ -447,6 +514,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                         }
                     }
                     if !sendSuccess{
+                        // MARK: 发送失败
                         let timeMarker = NSMutableDictionary()
                         timeMarker.setValue("system", forKey: "send_from")
                         timeMarker.setValue("0", forKey: "fromid")
@@ -620,7 +688,6 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                 let picker = UIImagePickerController()
                 picker.delegate = self
                 picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
-                picker.allowsEditing = true
                 picker.view.tag = 1
                 if UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Rear) || UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Front){
                     //picker.cameraCaptureMode = UIImagePickerControllerCameraCaptureMode.Photo
@@ -682,65 +749,185 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         as1.cancelButtonIndex = as1.numberOfButtons - 1
         as1.showInView(view)
     }
-    func resizeImg(img:UIImage, _ width:CGFloat) ->UIImage{
-        let newsize = CGSize(width: width, height: (width/img.size.width)*img.size.height)
-        UIGraphicsBeginImageContext(newsize)
-        img.drawInRect(CGRectMake(0, 0, newsize.width, newsize.height))
-        let newimg = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return newimg
-    }
     func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
         dismissViewControllerAnimated(true) { 
             print("发图片")
-            // TODO: 生成一大一小两张图片
-            let img = self.resizeImg(image, 128)
+            // MARK: 发图片
+            // 生成两张大小的图片
+            let img = UIImage(image: image, resizeRatioWithHeight: 64)
+            let imgFull = UIImage(image: image, resizeRatioWithWidth: 640)
             let imgData = UIImageJPEGRepresentation(img, 0.5)
-            
+            let imgDataFull = UIImageJPEGRepresentation(imgFull, 0.5)
+            // 生成文件名和路径
             let fomatter = NSDateFormatter()
             fomatter.dateFormat = "yyyyMMddHHmmss"
             
             let filename = "user\(self.myUID!)_\(self.chatroomID!)_\(fomatter.stringFromDate(NSDate())).jpg"
-            let path = "\(self.caches)/chat_img/\(filename)"
+            let filenameFull = "user\(self.myUID!)_\(self.chatroomID!)_\(fomatter.stringFromDate(NSDate()))_full.jpg"
+            let path = "\(self.caches)/chat_img/\(filenameFull)"
+            // 图片先存到缓存
+            imgData?.writeToFile("\(self.caches)/chat_img/\(filename)", atomically: true)
+            imgDataFull?.writeToFile(path, atomically: true)
             
-            let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/sendImgMsg.php")!)
-            resq.HTTPMethod = "POST"
-            let postData = NSMutableData()
+            //比较时间，判断是否添加时间标记
+            let date = NSDate()
+            let formate = NSDateFormatter()
+            formate.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let timeStr = formate.stringFromDate(date)
             
-            resq.setValue("multipart/form-data; boundary=AaB03x", forHTTPHeaderField: "Content-Type")
-            postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"uid\";\r\n\r\n\(self.myUID!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
-            postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"acode\";\r\n\r\n\(self.myAcode!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
-            postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
-            postData.appendData(imgData!)
-            postData.appendData(NSString(string: "\r\n--AaB03x--\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
-            resq.setValue(String(postData.length), forHTTPHeaderField: "Content-Length")
-            resq.HTTPBody = postData
+            var requireMarker = true
             
+            if self.msgList.count != 0{
+                let lastTime = (self.msgList.lastObject as! NSDictionary).objectForKey("time") as! String
+                requireMarker = UDChatDate.isTimeToAddTimeMarker(timeStr, lastTime)
+            }
+            if requireMarker{
+                let timeMarker = NSMutableDictionary()
+                timeMarker.setValue("timeMark", forKey: "send_from")
+                timeMarker.setValue("0", forKey: "fromid")
+                timeMarker.setValue("string", forKey: "type")
+                timeMarker.setValue(UDChatDate.longTime(timeStr)!, forKey: "body")
+                timeMarker.setValue(timeStr, forKey: "time")
+                timeMarker.setValue("\(self.chatroomName!)", forKey: "chatname")
+                self.msgList.addObject(timeMarker)
+                
+            }
             
-            NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
-                var sendSuccess = false
-                if err == nil{
-//                    print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
-                    if let data = returnData{
-                        let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
-                        if json?.objectForKey("error") == nil{
-                            sendSuccess = true
-                            dispatch_async(dispatch_get_main_queue(), {
-                                imgData?.writeToFile(path, atomically: true)
-                            })
-                        }
-                    }
-                    
+            let msgToSend = NSMutableDictionary()
+            
+            let thisMsgBody = filename
+            if self.chatroomID!.hasPrefix("user"){
+                let thisChatID = NSString(string: self.chatroomID!).substringFromIndex(4)
+                //生成消息
+                msgToSend.setValue("user", forKey: "send_from")
+                msgToSend.setValue("\(self.myUID!)", forKey: "fromid")
+                
+                msgToSend.setValue("image", forKey: "type")
+                
+                msgToSend.setValue("\(thisMsgBody)", forKey: "body")
+                
+                msgToSend.setValue("\(timeStr)", forKey: "time")
+                msgToSend.setValue("\(self.chatroomName!)", forKey: "chatname")
+                msgToSend.setValue("0", forKey: "sendStatus")
+                
+                //写入文件
+                self.msgList.addObject(msgToSend)
+                self.tableView.reloadData()
+                
+                if self.tableView.contentSize.height > self.tableView.frame.height{
+                    self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
                 }
-                if !sendSuccess{
-                    dispatch_async(dispatch_get_main_queue(), {
-                        UIAlertView(title: "上传失败", message: nil, delegate: nil, cancelButtonTitle: "好").show()
-                    })
-                    
+                
+                let msgPath = "\(self.caches)/\(self.chatroomID!).plist"
+                self.msgList.writeToFile(msgPath, atomically: true)
+                
+                
+                //更新首页消息列表
+                let homePageMsg = NSMutableArray(contentsOfFile: "\(self.caches)/msg.plist")
+                var reverseAry = homePageMsg?.reverseObjectEnumerator().allObjects
+                for i in 0..<reverseAry!.count{
+                    let dic = reverseAry![i] as! NSDictionary
+                    if dic.objectForKey("send_from") as! String == "user" && dic.objectForKey("fromid") as! String == "\(thisChatID)"{
+                        reverseAry?.removeAtIndex(i)
+                        break
+                    }
+                }
+                let msgShowInHomePage = NSMutableDictionary(dictionary: msgToSend)
+                msgShowInHomePage.setValue(0, forKey: "unread")
+                msgShowInHomePage.setValue("\(thisChatID)", forKey: "fromid")
+                reverseAry?.append(msgShowInHomePage)
+                homePageMsg?.removeAllObjects()
+                reverseAry = (reverseAry! as NSArray).reverseObjectEnumerator().allObjects
+                for item in reverseAry!{
+                    homePageMsg?.addObject(item)
+                }
+                homePageMsg?.writeToFile("\(self.caches)/msg.plist", atomically: true)
+
+            
+                // POST 消息
+                let resq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/sendImgMsg.php")!)
+                resq.HTTPMethod = "POST"
+                let postData = NSMutableData()
+                
+                resq.setValue("multipart/form-data; boundary=AaB03x", forHTTPHeaderField: "Content-Type")
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"uid\";\r\n\r\n\(self.myUID!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"acode\";\r\n\r\n\(self.myAcode!)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"toid\";\r\n\r\n\(thisChatID)\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                
+                postData.appendData(NSString(string: "--AaB03x\r\nContent-Disposition: form-data; name=\"img\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(imgData!)
+                postData.appendData(NSString(string: "\r\n--AaB03x\r\nContent-Disposition: form-data; name=\"img_full\"; filename=\"\(filenameFull)\"\r\nContent-Type: image/jpeg\r\n\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                postData.appendData(imgDataFull!)
+                postData.appendData(NSString(string: "\r\n--AaB03x--\r\n").dataUsingEncoding(NSUTF8StringEncoding)!)
+                resq.setValue(String(postData.length), forHTTPHeaderField: "Content-Length")
+                resq.HTTPBody = postData
+                
+                
+                NSURLConnection.sendAsynchronousRequest(resq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) -> Void in
+                    var sendSuccess = false
+                    if err == nil{
+                        print("return data:\(NSString(data: returnData!, encoding: NSUTF8StringEncoding)!)")
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if json?.objectForKey("error") == nil{
+                                sendSuccess = true
+                                
+                            }
+                        }
+                        
+                    }
+                    if !sendSuccess{
+                        dispatch_async(dispatch_get_main_queue(), {
+                            let timeMarker = NSMutableDictionary()
+                            timeMarker.setValue("system", forKey: "send_from")
+                            timeMarker.setValue("0", forKey: "fromid")
+                            timeMarker.setValue("string", forKey: "type")
+                            timeMarker.setValue("很抱歉，图片发送失败", forKey: "body")
+                            timeMarker.setValue(timeStr, forKey: "time")
+                            timeMarker.setValue("\(self.chatroomName!)", forKey: "chatname")
+                            self.msgList.addObject(timeMarker)
+                            self.msgList.writeToFile(msgPath, atomically: true)
+                            
+                            dispatch_async(dispatch_get_main_queue(), {
+                                self.tableView.reloadData()
+                                if self.tableView.contentSize.height > self.tableView.frame.height{
+                                    self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
+                                }
+                            })
+                        })
+                        
+                    }
                 }
             }
         }
     }
+    
+    func chatBubble(chatBubble: UDChatBubble, clickedImageButtonView imageButton: UIButton) {
+        let curItem = msgList.objectAtIndex(chatBubble.indexPath.row) as! NSDictionary
+        let msgType = curItem.objectForKey("type") as! String
+        let msgText = curItem.objectForKey("body") as! String
+        if msgType != "image" {
+            return
+        }
+        let thum_img = UIImage(contentsOfFile: "\(caches)/chat_img/\(msgText)")
+        let imgVC = PVImgViewController(imagePrview: thum_img)
+        let filenameFull = "\(msgText.componentsSeparatedByString(".")[0])_full.\(msgText.componentsSeparatedByString(".")[1])"
+        if let fullImg = UIImage(contentsOfFile: filenameFull) {
+            imgVC.imageView.image = fullImg
+        }else{
+            imgVC.requestURL = "http://119.29.225.180/notecloud/getChatImg.php?filename=\(filenameFull)"
+        }
+        imgVC.delegate = self
+        hidesBottomBarWhenPushed = true
+        navigationController?.setNavigationBarHidden(true, animated: true)
+        tableView.alpha = 0
+        navigationController?.pushViewController(imgVC, animated: true)
+    }
+    func pvImgViewController(pvVC: PVImgViewController, finishedLoadingURLImage URL: String, image: UIImage) {
+        
+    }
+    
     /*
     // MARK: - Navigation
 
