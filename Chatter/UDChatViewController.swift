@@ -31,7 +31,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     private var buttomChangeHeight:CGFloat = 0
     
     private var tableOffsetYOrigin:CGFloat!
-//    private var isKeyboardShowed = false
+    private var isKeyboardShowed = false
     private var isScrollToButtom = true
     //private var keyboardAnimating = false
     
@@ -108,10 +108,10 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         }
         
         buttomOriginY = buttomBar.frame.origin.y
-        // TODO: 切换输入法bug
+        // MARK: 键盘切换输入框上移
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillShow(_:)), name: UIKeyboardWillShowNotification, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillUnShow(_:)), name: UIKeyboardWillHideNotification, object: nil)
-        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(UDChatViewController.keyboardWillChangeFrame(_:)), name: UIKeyboardWillChangeFrameNotification, object: nil)
         
         let msgPath = "\(caches)/\(chatroomID!).plist"
         if NSFileManager.defaultManager().fileExistsAtPath(msgPath){
@@ -163,7 +163,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             }
         }
         
-        if tableView.contentSize.height > tableView.frame.height - 40{
+        if isScrollToButtom && tableView.contentSize.height > tableView.frame.height - 40{
             tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: false)
         }
         if tableView.alpha == 0{
@@ -312,28 +312,55 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
             return 44
         }
     }
+    
+    func keyboardWillChangeFrame(noti:NSNotification) {
+        let info = noti.userInfo!
+        let heightValue = info[UIKeyboardFrameEndUserInfoKey] as! NSValue
+        let height = heightValue.CGRectValue().height
+        var time:NSTimeInterval = 0
+        let timeValue = info[UIKeyboardAnimationDurationUserInfoKey] as! NSValue
+        timeValue.getValue(&time)
+        print("change frame | height: \(height)")
+        if isKeyboardShowed{
+            UIView.animateWithDuration(time, animations: {
+                self.buttomBar.center.y = self.view.frame.height - height - 20
+                self.tableView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height - height)
+            }) { (finished) in
+            
+            }
+            if self.isScrollToButtom && tableView.contentSize.height > tableView.frame.height - 40{
+                self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
+            }
+            buttomStartedY = buttomBar.frame.origin.y + buttomChangeHeight
+            tableOffsetYOrigin = self.tableView.contentSize.height - self.tableView.frame.height
+        }
+        
+    }
 
     func keyboardWillShow(noti:NSNotification){
         let info = noti.userInfo!
-        let heightValue = info[UIKeyboardFrameBeginUserInfoKey] as! NSValue
+        let heightValue = info[UIKeyboardFrameEndUserInfoKey] as! NSValue
         let height = heightValue.CGRectValue().height
         var time:NSTimeInterval = 0
         let timeValue = info[UIKeyboardAnimationDurationUserInfoKey] as! NSValue
         timeValue.getValue(&time)
         //keyboardAnimating = true
-        
-        UIView.animateWithDuration(time, animations: {
-            self.buttomBar.center.y -= height
-            self.tableView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height - height)
+        print("keyboard show | height: \(height)")
+        if !isKeyboardShowed{
+            UIView.animateWithDuration(time, animations: {
+                self.buttomBar.center.y -= height
+                self.tableView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height - height)
             }) { (finished) in
                 
+            }
+            if self.isScrollToButtom && tableView.contentSize.height > tableView.frame.height - 40{
+                self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
+            }
+            buttomStartedY = buttomBar.frame.origin.y + buttomChangeHeight
+            tableOffsetYOrigin = self.tableView.contentSize.height - self.tableView.frame.height
+            isKeyboardShowed = true
         }
-        if self.isScrollToButtom{
-            self.tableView.setContentOffset(CGPoint(x: 0, y: self.tableView.contentSize.height - self.tableView.frame.height), animated: true)
-        }
-        buttomStartedY = buttomBar.frame.origin.y + buttomChangeHeight
-        tableOffsetYOrigin = self.tableView.contentSize.height - self.tableView.frame.height
-//        isKeyboardShowed = true
+        
     }
     
     func keyboardWillUnShow(noti:NSNotification){
@@ -342,13 +369,14 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         let timeValue = info[UIKeyboardAnimationDurationUserInfoKey] as! NSValue
         timeValue.getValue(&time)
         //keyboardAnimating = true
+        print("keyboard unshow")
         UIView.animateWithDuration(time, animations: {
             self.buttomBar.frame.origin.y = self.buttomOriginY - self.buttomChangeHeight
             self.tableView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height)
             }) { (finished) in
                 //self.keyboardAnimating = false
         }
-//        isKeyboardShowed = false
+        isKeyboardShowed = false
     }
     
     func textViewDidChange(textView: UITextView) {
@@ -742,6 +770,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     func moreTypeOption(){
+        inputTextView.resignFirstResponder()
         let as1 = UIActionSheet(title: "发送图片", delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
         as1.addButtonWithTitle("拍照")
         as1.addButtonWithTitle("选择照片")
