@@ -518,6 +518,51 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                 navigationController?.pushViewController(postVC, animated: true)
                 break
             case 1:
+                // MARK: 删除好友提示
+                let deleteAlert = UIAlertView(title: "确认删除好友?", message: "删除好友会保留聊天记录与缓存图片，可手动删除", delegate: self, cancelButtonTitle: nil)
+                deleteAlert.addButtonWithTitle("是")
+                deleteAlert.addButtonWithTitle("否")
+                deleteAlert.cancelButtonIndex = 1
+                deleteAlert.tag = 100
+                deleteAlert.show()
+                
+                break
+            default:
+                break
+            }
+            break
+        case .Stranger:
+            if buttonIndex == 0{
+                // MARK: 添加黑名单提示
+                let deleteAlert = UIAlertView(title: "添加到黑名单?", message: "对方将无法添加你为好友，可防止该用户骚扰", delegate: self, cancelButtonTitle: nil)
+                deleteAlert.addButtonWithTitle("是")
+                deleteAlert.addButtonWithTitle("否")
+                deleteAlert.cancelButtonIndex = 1
+                deleteAlert.tag = 200
+                deleteAlert.show()
+            }
+            
+            break
+        case .BlackList:
+            if buttonIndex == 0{
+                // MARK: 移除黑名单提示
+                let deleteAlert = UIAlertView(title: "移出黑名单?", message: "将把该用户移出黑名单", delegate: self, cancelButtonTitle: nil)
+                deleteAlert.addButtonWithTitle("是")
+                deleteAlert.addButtonWithTitle("否")
+                deleteAlert.cancelButtonIndex = 1
+                deleteAlert.tag = 300
+                deleteAlert.show()
+            }
+            
+            break
+        }
+        
+    }
+    
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        switch alertView.tag {
+        case 100:
+            if buttonIndex == 0{
                 print("删除")
                 // MARK: 删除好友
                 let deleteResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/deleteFriend.php")!)
@@ -525,12 +570,14 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                 deleteResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
                 NSURLConnection.sendAsynchronousRequest(deleteResq, queue: NSOperationQueue(), completionHandler: { (resp:
                     NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    var isSuccess = false
                     if err == nil{
                         if let data = returnData{
                             let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
                             if json != nil{
                                 if json?.objectForKey("error") == nil{
-                                    
+                                    isSuccess = true
+                                    // 删除首页信息
                                     let homePageMsg = NSMutableArray(contentsOfFile: "\(self.caches)/msg.plist")
                                     var index = 0
                                     for item in homePageMsg!{
@@ -543,6 +590,11 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                                         index += 1
                                     }
                                     
+                                    // 删除好友备注
+                                    self.friendComments?.removeObjectForKey("\(self.thisUid!)")
+                                    self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
+                                    
+                                    // 调整本页面的好友关系
                                     self.friendRelation = .Stranger
                                     
                                     dispatch_async(dispatch_get_main_queue(), {
@@ -550,6 +602,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                                         deleteAlert.tag = 101
                                         deleteAlert.show()
                                         
+                                        self.unameLabel.text = self.navigationItem.title
                                         
                                         var toolBarItems:[UIBarButtonItem] = []
                                         toolBarItems.append(UIBarButtonItem(image: UIImage(named: "addFriend"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
@@ -564,25 +617,60 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                             }
                         }
                     }
+                    if !isSuccess{
+                        dispatch_async(dispatch_get_main_queue(), {
+                            let deleteAlert = UIAlertView(title: "操作失败", message: nil, delegate: self, cancelButtonTitle: "好")
+                            deleteAlert.show()
+                        })
+                    }
                 })
-                break
-            default:
-                break
+ 
             }
             break
-        case .Stranger:
-            print("黑名单")
-            break
-        case .BlackList:
-            print("移除黑名单")
-            break
-        }
-        
-    }
-    
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
-        if alertView.tag == 101{
+        case 101:
             navigationController?.popToRootViewControllerAnimated(true)
+            break
+        case 200:
+            if buttonIndex == 0{
+                print("黑名单")
+                // MARK: 删除好友
+                let deleteResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/setBlackList.php")!)
+                deleteResq.HTTPMethod = "POST"
+                deleteResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
+                NSURLConnection.sendAsynchronousRequest(deleteResq, queue: NSOperationQueue(), completionHandler: { (resp:
+                    NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    var isSuccess = false
+                    if err == nil{
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if json != nil{
+                                if json?.objectForKey("error") == nil{
+                                    isSuccess = true
+                                    dispatch_async(dispatch_get_main_queue(), {
+                                        let deleteAlert = UIAlertView(title: "操作成功", message: nil, delegate: self, cancelButtonTitle: "好")
+                                        deleteAlert.show()
+                                    })
+                                    
+                                }
+                            }
+                        }
+                    }
+                    if !isSuccess{
+                        dispatch_async(dispatch_get_main_queue(), {
+                            let deleteAlert = UIAlertView(title: "操作失败", message: nil, delegate: self, cancelButtonTitle: "好")
+                            deleteAlert.show()
+                        })
+                    }
+                })
+            }
+            break
+        case 300:
+            if buttonIndex == 0{
+                print("移出黑名单")
+            }
+            break
+        default:
+            break
         }
     }
     

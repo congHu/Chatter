@@ -128,15 +128,23 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         // MARK: 定时检查新消息
         let msgPath = "\(caches)/\(chatroomID!).plist"
         if NSFileManager.defaultManager().fileExistsAtPath(msgPath){
-            msgList = NSMutableArray(contentsOfFile: msgPath)
+//            msgList = NSMutableArray(contentsOfFile: msgPath)
+            let newMsgList = NSMutableArray(contentsOfFile: msgPath)
+            if newMsgList?.count != msgList.count{
+                msgList = newMsgList
+                tableView.reloadData()
+                if isScrollToButtom && tableView.contentSize.height > tableView.frame.height{
+                    tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
+                }
+            }
         }else{
             msgList = NSMutableArray()
             msgList.writeToFile(msgPath, atomically: true)
         }
-        tableView.reloadData()
-        if isScrollToButtom && tableView.contentSize.height > tableView.frame.height{
-            tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
-        }
+//        tableView.reloadData()
+//        if isScrollToButtom && tableView.contentSize.height > tableView.frame.height{
+//            tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
+//        }
         
     }
 

@@ -139,9 +139,12 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
             cell.accessoryType = .DisclosureIndicator
             avatar = UIImageView(frame: CGRect(x: view.frame.width - 80, y: 8, width: 48, height: 48))
             avatar.backgroundColor = UIColor.grayColor()
-            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/avatar/user\(uid!).jpg"){
-                avatar.image = UIImage(contentsOfFile: "\(caches)/avatar/user\(uid!).jpg")
+            if avatar.image == nil{
+                if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/avatar/user\(uid!).jpg"){
+                    avatar.image = UIImage(contentsOfFile: "\(caches)/avatar/user\(uid!).jpg")
+                }
             }
+            
             
             cell.addSubview(avatar)
             break
@@ -150,9 +153,12 @@ class ThirdViewController: UIViewController, UITableViewDelegate, UITableViewDat
             cell.accessoryType = .DisclosureIndicator
             bgImgView = UIImageView(frame: CGRect(x: view.frame.width - 80, y: 8, width: 48, height: 48))
             bgImgView.backgroundColor = UIColor.grayColor()
-            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/bg_img/user\(uid!).jpg"){
-                bgImgView.image = UIImage(contentsOfFile: "\(caches)/bg_img/user\(uid!).jpg")
+            if bgImgView.image == nil{
+                if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/bg_img/user\(uid!).jpg"){
+                    bgImgView.image = UIImage(contentsOfFile: "\(caches)/bg_img/user\(uid!).jpg")
+                }
             }
+            
             
             cell.addSubview(bgImgView)
             break
