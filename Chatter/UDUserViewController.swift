@@ -301,6 +301,8 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                             dispatch_async(dispatch_get_main_queue(), {
                                 if returnCode == "1"{
                                     self.friendRelation = .Friend
+                                }else if returnCode == "2" {
+                                    self.friendRelation = .BlackList
                                 }
                                 var toolBarItems:[UIBarButtonItem] = []
                                 switch self.friendRelation {
@@ -312,6 +314,11 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                                 case .Friend:
                                     toolBarItems.append(UIBarButtonItem(image: UIImage(named: "chat"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoChat)))
 //                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: self, action: nil))
+                                    toolBarItems.append(UIBarButtonItem(image: UIImage(named: "more"), style: .Plain, target: self, action: #selector(UDUserViewController.moreMenu)))
+                                    break
+                                case .BlackList:
+                                    toolBarItems.append(UIBarButtonItem(image: UIImage(named: "addFriend"), style: .Plain, target: self, action: #selector(UDUserViewController.gotoAddFriend)))
+                                    //                                    toolBarItems.append(UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: self, action: nil))
                                     toolBarItems.append(UIBarButtonItem(image: UIImage(named: "more"), style: .Plain, target: self, action: #selector(UDUserViewController.moreMenu)))
                                     break
                                 default:
@@ -592,6 +599,7 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                                     
                                     // 删除好友备注
                                     self.friendComments?.removeObjectForKey("\(self.thisUid!)")
+                                    self.unameLabel.text = self.navigationItem.title
                                     self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
                                     
                                     // 调整本页面的好友关系
@@ -633,11 +641,11 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         case 200:
             if buttonIndex == 0{
                 print("黑名单")
-                // MARK: 删除好友
-                let deleteResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/setBlackList.php")!)
-                deleteResq.HTTPMethod = "POST"
-                deleteResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
-                NSURLConnection.sendAsynchronousRequest(deleteResq, queue: NSOperationQueue(), completionHandler: { (resp:
+                // MARK: 添加黑名单操作
+                let addBLResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/setBlackList.php")!)
+                addBLResq.HTTPMethod = "POST"
+                addBLResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
+                NSURLConnection.sendAsynchronousRequest(addBLResq, queue: NSOperationQueue(), completionHandler: { (resp:
                     NSURLResponse?, returnData:NSData?, err:NSError?) in
                     var isSuccess = false
                     if err == nil{
@@ -646,9 +654,11 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                             if json != nil{
                                 if json?.objectForKey("error") == nil{
                                     isSuccess = true
+                                    self.friendRelation = .BlackList
                                     dispatch_async(dispatch_get_main_queue(), {
-                                        let deleteAlert = UIAlertView(title: "操作成功", message: nil, delegate: self, cancelButtonTitle: "好")
-                                        deleteAlert.show()
+                                        let addBLAlert = UIAlertView(title: "操作成功", message: nil, delegate: self, cancelButtonTitle: "好")
+                                        addBLAlert.show()
+                                        
                                     })
                                     
                                 }
@@ -657,8 +667,8 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
                     }
                     if !isSuccess{
                         dispatch_async(dispatch_get_main_queue(), {
-                            let deleteAlert = UIAlertView(title: "操作失败", message: nil, delegate: self, cancelButtonTitle: "好")
-                            deleteAlert.show()
+                            let addBLAlert = UIAlertView(title: "操作失败", message: nil, delegate: self, cancelButtonTitle: "好")
+                            addBLAlert.show()
                         })
                     }
                 })
@@ -667,6 +677,37 @@ class UDUserViewController: UIViewController, UIActionSheetDelegate, UIAlertView
         case 300:
             if buttonIndex == 0{
                 print("移出黑名单")
+                // MARK: 移除黑名单操作
+                let rmBLResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/removeBlackList.php")!)
+                rmBLResq.HTTPMethod = "POST"
+                rmBLResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(acode!)&toid=\(thisUid!)").dataUsingEncoding(NSUTF8StringEncoding)
+                NSURLConnection.sendAsynchronousRequest(rmBLResq, queue: NSOperationQueue(), completionHandler: { (resp:
+                    NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    var isSuccess = false
+                    if err == nil{
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if json != nil{
+                                if json?.objectForKey("error") == nil{
+                                    isSuccess = true
+                                    self.friendRelation = .Stranger
+                                    dispatch_async(dispatch_get_main_queue(), {
+                                        let rmBLAlert = UIAlertView(title: "操作成功", message: nil, delegate: self, cancelButtonTitle: "好")
+                                        rmBLAlert.show()
+                                        
+                                    })
+                                    
+                                }
+                            }
+                        }
+                    }
+                    if !isSuccess{
+                        dispatch_async(dispatch_get_main_queue(), {
+                            let rmBLAlert = UIAlertView(title: "操作失败", message: nil, delegate: self, cancelButtonTitle: "好")
+                            rmBLAlert.show()
+                        })
+                    }
+                })
             }
             break
         default:

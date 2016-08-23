@@ -8,7 +8,7 @@
 
 import UIKit
 
-class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, DRMovePanViewDelegate, CellSwipeButtonsViewDelgate, UIScrollViewDelegate {
+class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, DRMovePanViewDelegate, CellSwipeButtonsViewDelgate, UIScrollViewDelegate, UITabBarControllerDelegate {
     
 //    var loginVC:UDLoginViewController!
     var uid:String?
@@ -74,6 +74,8 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         navBar.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(FirstViewController.gotoSearch))
         
+        self.tabBarController?.delegate = self
+        
     }
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
@@ -112,25 +114,21 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             
             
             //获取备注列表
-            if NSFileManager.defaultManager().fileExistsAtPath("\(caches)/friend_comments.plist"){
-                friendComments = NSDictionary(contentsOfFile: "\(caches)/friend_comments.plist")
-            }else{
-                
-                let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
-                friendComReq.HTTPMethod = "POST"
-                friendComReq.HTTPBody = NSString(string: "uid=\(uid!)&&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
-                NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
-                    if err == nil{
-                        if let data = returnData{
-//                            print(NSString(data: data, encoding: NSUTF8StringEncoding))
-                            let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments)
-                            let jsonDict = jsonObj as? NSDictionary
-                            if jsonDict != nil{
-                                self.friendComments = NSDictionary(dictionary: jsonDict!)
-                                self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
-                            }
-                            
+
+            let friendComReq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/getFriendComments.php")!)
+            friendComReq.HTTPMethod = "POST"
+            friendComReq.HTTPBody = NSString(string: "uid=\(uid!)&&acode=\(active!)").dataUsingEncoding(NSUTF8StringEncoding)
+            NSURLConnection.sendAsynchronousRequest(friendComReq, queue: NSOperationQueue()) { (resp:NSURLResponse?, returnData:NSData?, err:NSError?) in
+                if err == nil{
+                    if let data = returnData{
+//                        print(NSString(data: data, encoding: NSUTF8StringEncoding))
+                        let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments)
+                        let jsonDict = jsonObj as? NSDictionary
+                        if jsonDict != nil{
+                            self.friendComments = NSDictionary(dictionary: jsonDict!)
+                            self.friendComments?.writeToFile("\(self.caches)/friend_comments.plist", atomically: true)
                         }
+                        
                     }
                 }
             }
@@ -453,9 +451,9 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             chatVC.chatroomID = "\(chatType)\(chatID)"
             inChatRoom = "\(chatType)\(chatID)"
             chatVC.chatroomName = msgItem?.objectForKey("chatname") as? String
-            if friendComments?.objectForKey("\(chatID)") != nil{
-                chatVC.chatroomName = friendComments?.objectForKey("\(chatID)") as? String
-            }
+//            if friendComments?.objectForKey("\(chatID)") != nil{
+//                chatVC.chatroomName = friendComments?.objectForKey("\(chatID)") as? String
+//            }
         }else if chatType.hasPrefix("group"){
             chatVC.chatroomID = "\(chatType)"
             inChatRoom = "\(chatType)"
@@ -588,7 +586,11 @@ class FirstViewController: UIViewController, UITableViewDelegate, UITableViewDat
             break
         }
     }
-
+    
+    func tabBarController(tabBarController: UITabBarController, didSelectViewController viewController: UIViewController) {
+        // TODO: 点击tabbar事件
+    }
+    
 }
 class UDSingleChat{
     static var rootVC:FirstViewController?

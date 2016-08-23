@@ -120,7 +120,7 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
                 if let data = returnData{
                     let jsonObj = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSArray
                     self.friendList = NSMutableArray(array: jsonObj!)
-                    
+//                    print(self.friendList)
                     //排序
                     self.friendList.sortUsingFunction({ (first:AnyObject, second:AnyObject, context:UnsafeMutablePointer<Void>) -> Int in
                         let Obi = first as! NSDictionary
@@ -321,7 +321,10 @@ class SecondViewController: UIViewController, UITableViewDelegate, UITableViewDa
             hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(searchVC, animated: true)
         }else{
-            let thisIndex = indexPath.row + (indexPath.section-1)*numOfRows[indexPath.section-1]
+            var thisIndex = indexPath.row
+            for i in 0..<indexPath.section-1{
+                thisIndex += numOfRows[i]
+            }
             let friendItem = friendList.objectAtIndex(thisIndex) as? NSDictionary
             let userVC = UDUserViewController()
             // MARK: 进入用户详情

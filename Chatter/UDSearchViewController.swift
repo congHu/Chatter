@@ -157,6 +157,7 @@ class UDSearchViewController: UIViewController, UITableViewDelegate, UITableView
                 userVC.rootVC = self.rootVC
                 userVC.needToTab = pushFromTab2
                 hidesBottomBarWhenPushed = true
+                tableView.deselectRowAtIndexPath(indexPath, animated: true)
                 navigationController?.pushViewController(userVC, animated: true)
             }
         }

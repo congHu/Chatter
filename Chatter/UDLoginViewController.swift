@@ -292,7 +292,7 @@ class UDLoginViewController: UIViewController {
             }else{
                 // MARK: 登陆成功
                 NSUserDefaults.standardUserDefaults().setObject(res, forKey: "user")
-                print(jsonObj)
+//                print(jsonObj)
                 dismissViewControllerAnimated(true, completion: nil)
             }
         }

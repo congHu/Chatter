@@ -8,7 +8,7 @@
 
 import UIKit
 
-class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UDChatBubbleDelegate, PVImgViewControllerDelegate {
+class UDChatViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UDChatBubbleDelegate, PVImgViewControllerDelegate, UIAlertViewDelegate {
 
     var chatroomID:String?
     var chatroomName:String?
@@ -135,6 +135,13 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                 tableView.reloadData()
                 if isScrollToButtom && tableView.contentSize.height > tableView.frame.height{
                     tableView.setContentOffset(CGPoint(x: 0, y: tableView.contentSize.height - tableView.frame.height), animated: true)
+                }
+                // TODO: 如果收到对方确认好友的信息，则马上隐藏添加好友按钮
+                if (newMsgList?.lastObject as! NSDictionary).objectForKey("type") as! String != "req" {
+                    self.addFriendComfirm?.alpha = 0
+                    self.blackListOptionBar?.alpha = 0
+                    self.inputTextView.alpha = 1
+                    self.moreType.alpha = 1
                 }
             }
         }else{
@@ -493,6 +500,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
                 msgToSend.setValue("\(thisMsgBody)", forKey: "body")
                 
                 msgToSend.setValue("\(timeStr)", forKey: "time")
+                
                 msgToSend.setValue("\(chatroomName!)", forKey: "chatname")
                 msgToSend.setValue("0", forKey: "sendStatus")
                 
@@ -592,6 +600,7 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     //我们已经成为好友啦，可以愉快地开始聊天啦!
     func comfirmFriend(){
         print("确认添加好友")
+        // MARK: 确认添加好友
 //        let thisChatID = NSString(string: chatroomID!).substringFromIndex(4)
         
         //比较时间，判断是否添加时间标记
@@ -710,17 +719,33 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
         }
     }
     func showBlackListOption(){
-        UIActionSheet(title: "添加黑名单防止该用户骚扰", delegate: self, cancelButtonTitle: "取消", destructiveButtonTitle: "添加黑名单").showInView(view)
+        let blOptionSheet = UIActionSheet(title: "添加黑名单防止该用户骚扰", delegate: self, cancelButtonTitle: nil, destructiveButtonTitle: nil)
+        blOptionSheet.addButtonWithTitle("忽略该请求")
+        blOptionSheet.addButtonWithTitle("添加黑名单")
+        blOptionSheet.addButtonWithTitle("取消")
+        blOptionSheet.destructiveButtonIndex = 1
+        blOptionSheet.cancelButtonIndex = 2
+        blOptionSheet.showInView(view)
+        
     }
     func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
         if actionSheet.title == "添加黑名单防止该用户骚扰" {
-            if buttonIndex == 0{
+            if buttonIndex == 1{
                 print("添加黑名单")
+                // MARK: 添加黑名单提示
+                let deleteAlert = UIAlertView(title: "添加到黑名单?", message: "对方将无法添加你为好友，可防止该用户骚扰", delegate: self, cancelButtonTitle: nil)
+                deleteAlert.addButtonWithTitle("是")
+                deleteAlert.addButtonWithTitle("否")
+                deleteAlert.cancelButtonIndex = 1
+                deleteAlert.tag = 200
+                deleteAlert.show()
+            }else if buttonIndex == 0{
+                ignoreFriendReq()
             }
         }else if actionSheet.title == "发送图片" {
             switch buttonIndex {
             case 0:
-                
+                // MARK: 弹出图片选择
                 let picker = UIImagePickerController()
                 picker.delegate = self
                 picker.modalTransitionStyle = UIModalTransitionStyle.CoverVertical
@@ -963,6 +988,69 @@ class UDChatViewController: UIViewController, UITableViewDataSource, UITableView
     }
     func pvImgViewController(pvVC: PVImgViewController, finishedLoadingURLImage URL: String, image: UIImage) {
         
+    }
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        switch alertView.tag {
+        case 200:
+            if buttonIndex == 0{
+                print("黑名单")
+                // MARK: 添加黑名单操作
+                let addBLResq = NSMutableURLRequest(URL: NSURL(string: "http://119.29.225.180/notecloud/setBlackList.php")!)
+                addBLResq.HTTPMethod = "POST"
+                let thisUid = NSString(string: chatroomID!).substringFromIndex(4)
+                addBLResq.HTTPBody = NSString(string: "uid=\(myUID!)&acode=\(myAcode!)&toid=\(thisUid)").dataUsingEncoding(NSUTF8StringEncoding)
+                NSURLConnection.sendAsynchronousRequest(addBLResq, queue: NSOperationQueue(), completionHandler: { (resp:
+                    NSURLResponse?, returnData:NSData?, err:NSError?) in
+                    var isSuccess = false
+                    if err == nil{
+                        if let data = returnData{
+                            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! NSDictionary
+                            if json != nil{
+                                if json?.objectForKey("error") == nil{
+                                    isSuccess = true
+                                    dispatch_async(dispatch_get_main_queue(), {
+                                        let addBLAlert = UIAlertView(title: "操作成功", message: nil, delegate: self, cancelButtonTitle: "好")
+                                        addBLAlert.tag = 201
+                                        addBLAlert.show()
+                                        
+                                    })
+                                    
+                                }
+                            }
+                        }
+                    }
+                    if !isSuccess{
+                        dispatch_async(dispatch_get_main_queue(), {
+                            let addBLAlert = UIAlertView(title: "操作失败", message: nil, delegate: self, cancelButtonTitle: "好")
+                            addBLAlert.show()
+                        })
+                    }
+                })
+            }
+            break
+        case 201:
+            ignoreFriendReq()
+            break
+        default:
+            break
+        }
+    }
+    
+    func ignoreFriendReq(){
+        // 删除首页条目
+        let homePageMsg = NSMutableArray(contentsOfFile: "\(caches)/msg.plist")
+        let thisUid = NSString(string: chatroomID!).substringFromIndex(4)
+        for i in 0..<homePageMsg!.count{
+            let item = homePageMsg?.objectAtIndex(i) as! NSDictionary
+            if item.objectForKey("send_from") as! String == "user" && item.objectForKey("fromid") as! String == "\(thisUid)" {
+                homePageMsg?.removeObjectAtIndex(i)
+                homePageMsg?.writeToFile("\(caches)/msg.plist", atomically: true)
+                break
+            }
+        }
+        
+        
+        navigationController?.popViewControllerAnimated(true)
     }
     
     /*
